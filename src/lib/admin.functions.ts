@@ -24,10 +24,27 @@ export const createAccount = createServerFn({ method: "POST" })
     if (error) throw new Error("Unable to check account permissions.");
     assertAdmin(allowed);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    const account = {
       email: data.email, password: data.password, email_confirm: true,
       user_metadata: { full_name: data.fullName }, app_metadata: { managed_account: true },
-    });
+    };
+    let { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser(account);
+
+    // A Worker-to-Auth connection can fail after Supabase accepted the request.
+    // Recover only accounts carrying our private managed-account marker; if no
+    // such account exists, one retry is safe and avoids duplicate identities.
+    if (createError && /failed to fetch|network|connection/i.test(createError.message)) {
+      const lookup = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const recovered = lookup.data?.users.find((candidate) =>
+        candidate.email?.toLowerCase() === data.email && candidate.app_metadata?.managed_account === true,
+      );
+      if (recovered) {
+        created = { user: recovered };
+        createError = null;
+      } else if (!lookup.error) {
+        ({ data: created, error: createError } = await supabaseAdmin.auth.admin.createUser(account));
+      }
+    }
     if (createError) throw new Error(createError.message);
     const user = created.user;
     if (!user) throw new Error("The account could not be created.");
