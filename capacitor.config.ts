@@ -13,7 +13,8 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchAutoHide: false,
+      launchAutoHide: true,
+      launchShowDuration: 4000,
       launchFadeOutDuration: 350,
       backgroundColor: "#fbfaf5",
       androidSplashResourceName: "ayu_scholar_mark",
