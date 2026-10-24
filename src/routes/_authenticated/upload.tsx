@@ -44,32 +44,43 @@ function UploadPage() {
     e.preventDefault();
     if (!file || !me) return void toast.error("Choose a file first.");
     setBusy(true);
+    let createdPaperId: string | null = null;
+    let uploadedPath: string | null = null;
     try {
       const kind = fileKind(file);
       if (!kind) throw new Error("Choose a PDF or Excel file.");
-      const { data: paper, error } = await supabase
-        .from("papers")
-        .insert({
-          ...form,
-          uploader_id: me.id,
-          file_type: kind,
-          file_name: file.name,
-          status: "uploaded",
-        })
-        .select()
-        .single();
+      const { data: paper, error } = await supabase.rpc("create_paper", {
+        _title: form.title,
+        _exam_name: form.exam_name,
+        _subject: form.subject,
+        _test_number: form.test_number,
+        _file_type: kind,
+        _file_name: file.name,
+      });
       if (error) throw error;
+      createdPaperId = paper.id;
       const path = `${paper.id}/original/${file.name.replace(/[^\w.-]+/g, "_")}`;
       const upload = await supabase.storage
         .from("papers")
         .upload(path, file, file.type ? { contentType: file.type } : {});
       if (upload.error) throw upload.error;
-      await supabase.from("papers").update({ file_path: path }).eq("id", paper.id);
+      uploadedPath = path;
+      const { error: attachError } = await supabase
+        .from("papers")
+        .update({ file_path: path })
+        .eq("id", paper.id);
+      if (attachError) throw attachError;
+      uploadedPath = null;
+      createdPaperId = null;
       await logActivity(paper.id, "uploaded", file.name);
       await qc.invalidateQueries({ queryKey: ["papers"] });
       toast.success(`Paper ${paper.paper_code} uploaded. Use Share to assign a Dr.`);
       navigate({ to: "/papers/$paperId", params: { paperId: paper.id } });
     } catch (error) {
+      if (uploadedPath) await supabase.storage.from("papers").remove([uploadedPath]);
+      if (createdPaperId) {
+        await supabase.rpc("delete_unattached_paper", { _paper_id: createdPaperId });
+      }
       const message =
         error && typeof error === "object" && "message" in error
           ? String(error.message)

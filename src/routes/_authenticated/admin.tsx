@@ -3,23 +3,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, UserPlus, Users, UserCog } from "lucide-react";
-import {
-  listAccounts,
-  createAccount,
-  resetAccountPassword,
-  changeAccountRole,
-} from "@/lib/admin.functions";
+import { KeyRound, UserPlus, Users } from "lucide-react";
+import { listAccounts, createAccount, resetAccountPassword } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const accountOptions = { queryKey: ["admin-accounts"], queryFn: () => listAccounts() };
@@ -54,7 +42,6 @@ function AdminPage() {
   const { data: accounts } = useSuspenseQuery(accountOptions);
   const create = useServerFn(createAccount);
   const reset = useServerFn(resetAccountPassword);
-  const changeRole = useServerFn(changeAccountRole);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
@@ -63,27 +50,6 @@ function AdminPage() {
   const [role] = useState<"uploader">("uploader");
   const [target, setTarget] = useState<(typeof accounts)[number] | null>(null);
   const [newPassword, setNewPassword] = useState("");
-  const [roleTarget, setRoleTarget] = useState<(typeof accounts)[number] | null>(null);
-  const [newRole, setNewRole] = useState<"reviewer" | "uploader">("reviewer");
-  async function submitRole(e: React.FormEvent) {
-    e.preventDefault();
-    if (!roleTarget) return;
-    setBusy(true);
-    try {
-      await changeRole({ data: { userId: roleTarget.id, role: newRole } });
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["admin-accounts"] }),
-        qc.invalidateQueries({ queryKey: ["profiles"] }),
-        qc.invalidateQueries({ queryKey: ["me"] }),
-      ]);
-      toast.success("Role updated.");
-      setRoleTarget(null);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to change role.");
-    } finally {
-      setBusy(false);
-    }
-  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -218,26 +184,15 @@ function AdminPage() {
                 <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground">
                   {a.roles
                     .map((r) =>
-                      r === "uploader" ? "Paper creator" : r === "reviewer" ? "Dr" : "Admin",
+                      r === "uploader"
+                        ? "Paper creator"
+                        : r === "reviewer"
+                          ? "Legacy reviewer"
+                          : "Admin",
                     )
                     .join(", ") || "Unassigned"}
                 </span>
                 <div className="flex gap-2">
-                  {!a.roles.includes("admin") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busy}
-                      aria-label={`Change role for ${a.email}`}
-                      onClick={() => {
-                        setNewRole(a.roles.includes("uploader") ? "uploader" : "reviewer");
-                        setRoleTarget(a);
-                      }}
-                    >
-                      <UserCog className="h-4 w-4" />
-                      <span className="sr-only">Change role</span>
-                    </Button>
-                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -273,30 +228,15 @@ function AdminPage() {
                   <td className="py-4 pr-4 font-medium">{a.full_name || "Unnamed user"}</td>
                   <td className="py-4 pr-4">{a.email}</td>
                   <td className="py-4 pr-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span>
-                        {a.roles
-                          .map((r) =>
-                            r === "uploader" ? "Paper creator" : r === "reviewer" ? "Dr" : "Admin",
-                          )
-                          .join(", ") || "Unassigned"}
-                      </span>
-                      {!a.roles.includes("admin") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={busy}
-                          aria-label={`Change role for ${a.email || a.full_name}`}
-                          onClick={() => {
-                            setNewRole(a.roles.includes("uploader") ? "uploader" : "reviewer");
-                            setRoleTarget(a);
-                          }}
-                        >
-                          <UserCog className="h-4 w-4" />
-                          Change role
-                        </Button>
-                      )}
-                    </div>
+                    {a.roles
+                      .map((r) =>
+                        r === "uploader"
+                          ? "Paper creator"
+                          : r === "reviewer"
+                            ? "Legacy reviewer"
+                            : "Admin",
+                      )
+                      .join(", ") || "Unassigned"}
                   </td>
                   <td className="py-4 text-right">
                     <Button
@@ -344,52 +284,6 @@ function AdminPage() {
               />
             </div>
             <Button disabled={busy}>Save password</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={roleTarget !== null}
-        onOpenChange={(open) => {
-          if (!busy && !open) setRoleTarget(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change role for {roleTarget?.email || roleTarget?.full_name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={submitRole} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="change-role">Role</Label>
-              <Select
-                value={newRole}
-                disabled={busy}
-                onValueChange={(value) => {
-                  if (value === "reviewer" || value === "uploader") setNewRole(value);
-                }}
-              >
-                <SelectTrigger id="change-role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="reviewer">Dr</SelectItem>
-                  <SelectItem value="uploader">Paper creator</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy}
-                onClick={() => setRoleTarget(null)}
-              >
-                Cancel
-              </Button>
-              <Button disabled={busy}>
-                <UserCog className="h-4 w-4" />
-                {busy ? "Saving…" : "Save role"}
-              </Button>
-            </div>
           </form>
         </DialogContent>
       </Dialog>

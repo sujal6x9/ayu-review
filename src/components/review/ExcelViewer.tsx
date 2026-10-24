@@ -83,9 +83,9 @@ export function ExcelViewer(p: Props) {
   }
 
   function cellAtPoint(x: number, y: number) {
-    const cell = document.elementsFromPoint(x, y).find((element) => element instanceof HTMLElement && element.dataset.cell) as HTMLElement | undefined;
-    if (!cell?.dataset.cell || cell.dataset.row === undefined || cell.dataset.col === undefined) return null;
-    return { cell: cell.dataset.cell, row: Number(cell.dataset.row), col: Number(cell.dataset.col) };
+    const cell = document.elementsFromPoint(x, y).find((element) => element instanceof HTMLElement && element.dataset["cell"]) as HTMLElement | undefined;
+    if (!cell?.dataset["cell"] || cell.dataset["row"] === undefined || cell.dataset["col"] === undefined) return null;
+    return { cell: cell.dataset["cell"], row: Number(cell.dataset["row"]), col: Number(cell.dataset["col"]) };
   }
   const commentOnSelection = () => {
     if (!sel) return;

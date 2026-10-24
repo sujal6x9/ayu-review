@@ -18,7 +18,7 @@ export const listAccounts = createServerFn({ method: "POST" })
 
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => createAccountSchema.parse(input))
+  .validator((input: unknown) => createAccountSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { data: allowed, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (error) throw new Error("Unable to check account permissions.");
@@ -36,7 +36,7 @@ export const createAccount = createServerFn({ method: "POST" })
     if (createError && /failed to fetch|network|connection/i.test(createError.message)) {
       const lookup = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       const recovered = lookup.data?.users.find((candidate) =>
-        candidate.email?.toLowerCase() === data.email && candidate.app_metadata?.managed_account === true,
+        candidate.email?.toLowerCase() === data.email && candidate.app_metadata?.["managed_account"] === true,
       );
       if (recovered) {
         created = { user: recovered };
@@ -61,7 +61,7 @@ export const createAccount = createServerFn({ method: "POST" })
 
 export const resetAccountPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => resetAccountSchema.parse(input))
+  .validator((input: unknown) => resetAccountSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { data: allowed, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (error) throw new Error("Unable to check account permissions.");
@@ -74,7 +74,7 @@ export const resetAccountPassword = createServerFn({ method: "POST" })
 
 export const changeAccountRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => changeRoleSchema.parse(input))
+  .validator((input: unknown) => changeRoleSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { data: allowed, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (error) throw new Error("Unable to check account permissions.");

@@ -244,6 +244,21 @@ export type Database = {
         Args: { _doctor_id: string; _paper_id: string; _password: string };
         Returns: string;
       };
+      create_paper: {
+        Args: {
+          _exam_name?: string;
+          _file_name?: string | null;
+          _file_type?: string | null;
+          _subject?: string;
+          _test_number?: string;
+          _title: string;
+        };
+        Returns: Database["public"]["Tables"]["papers"]["Row"];
+      };
+      delete_unattached_paper: {
+        Args: { _paper_id: string };
+        Returns: undefined;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
