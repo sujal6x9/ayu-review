@@ -11,6 +11,18 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: "#fbfaf5",
   },
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: false,
+      launchFadeOutDuration: 350,
+      backgroundColor: "#fbfaf5",
+      androidSplashResourceName: "ayu_scholar_mark",
+      androidScaleType: "CENTER_INSIDE",
+      showSpinner: true,
+      androidSpinnerStyle: "small",
+      spinnerColor: "#007f69",
+    },
+  },
 };
 
 export default config;

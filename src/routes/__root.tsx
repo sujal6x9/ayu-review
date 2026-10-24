@@ -4,11 +4,14 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Capacitor } from "@capacitor/core";
+import { SplashScreen } from "@capacitor/splash-screen";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -141,10 +144,35 @@ function RootComponent() {
     void navigator.serviceWorker.register("/sw.js");
   }, []);
 
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const hideSplash = () => void SplashScreen.hide();
+    void document.fonts.ready.then(hideSplash);
+    const fallback = window.setTimeout(hideSplash, 4000);
+    return () => window.clearTimeout(fallback);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
+      <NavigationLoading />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
+  );
+}
+
+function NavigationLoading() {
+  const loading = useRouterState({ select: (state) => state.status === "pending" });
+  if (!loading) return null;
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[100]" role="status">
+      <div className="h-1 w-full overflow-hidden bg-primary/15">
+        <div className="h-full w-1/2 animate-[pulse_900ms_ease-in-out_infinite] rounded-r-full bg-primary shadow-[0_0_14px_rgba(0,127,105,.65)]" />
+      </div>
+      <div className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/95 px-3 py-2 text-xs font-semibold text-primary shadow-lg backdrop-blur">
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary/25 border-r-primary" />
+        Loading…
+      </div>
+    </div>
   );
 }
