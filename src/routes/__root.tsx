@@ -80,6 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#007f69" },
       { title: "Ayu Review" },
       { name: "description", content: "Collaborative review and approval of question papers." },
       { property: "og:type", content: "website" },
@@ -87,6 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", href: "/ayu-scholar-mark.png", type: "image/png" },
       { rel: "apple-touch-icon", href: "/ayu-scholar-mark.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -133,6 +135,11 @@ function RootComponent() {
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.register("/sw.js");
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

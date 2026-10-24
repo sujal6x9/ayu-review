@@ -1,0 +1,20 @@
+{
+  "name": "Ayu Review",
+  "short_name": "Ayu Review",
+  "description": "Question paper review and approval workspace",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf5",
+  "theme_color": "#007f69",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/ayu-scholar-mark.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
