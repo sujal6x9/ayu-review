@@ -1,0 +1,2 @@
+GRANT DELETE ON public.comments TO authenticated;
+CREATE POLICY "comments delete by author or admin" ON public.comments FOR DELETE TO authenticated USING (public.can_access_paper(paper_id) AND (author_id = (SELECT auth.uid()) OR public.has_role((SELECT auth.uid()), 'admin'::public.app_role)));
