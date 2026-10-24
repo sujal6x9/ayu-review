@@ -52,8 +52,6 @@ function UploadPage() {
         .insert({
           ...form,
           uploader_id: me.id,
-          reviewer_id: null,
-          doctor_id: null,
           file_type: kind,
           file_name: file.name,
           status: "uploaded",
@@ -72,7 +70,11 @@ function UploadPage() {
       toast.success(`Paper ${paper.paper_code} uploaded. Use Share to assign a Dr.`);
       navigate({ to: "/papers/$paperId", params: { paperId: paper.id } });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload failed.");
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Upload failed.";
+      toast.error(message);
     } finally {
       setBusy(false);
     }
