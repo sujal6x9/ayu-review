@@ -177,7 +177,7 @@ function Workspace() {
   const isAdmin = !!me?.roles.includes("admin");
 
   return (
-    <div className="flex min-h-[calc(100svh-8rem)] min-w-0 flex-col pb-20 lg:h-[calc(100svh-4.5rem)] lg:pb-0">
+    <div className="flex min-h-[calc(100svh-7rem)] min-w-0 flex-col pb-20 lg:h-[calc(100svh-4.5rem)] lg:pb-0">
       <WorkflowBar
         paper={paper}
         isUploader={isUploader || isAdmin}
@@ -187,13 +187,13 @@ function Workspace() {
         onChanged={refresh}
         openIssues={threads.length - resolved}
       />
-      <nav aria-label="Review panels" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 gap-1 border-t bg-background px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">{(["document", "comments", "progress"] as const).map((panel) => {
+      <nav aria-label="Review panels" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 gap-1 border-t border-border/70 bg-background/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_35px_-28px_rgba(15,45,55,.8)] backdrop-blur-xl lg:hidden">{(["document", "comments", "progress"] as const).map((panel) => {
         const Icon = panel === "document" ? FileText : panel === "comments" ? MessagesSquare : ChartNoAxesColumn;
         return <Button key={panel} aria-pressed={mobilePanel === panel} variant={mobilePanel === panel ? "secondary" : "ghost"} className="h-12 min-w-0 flex-col gap-1 text-xs capitalize" onClick={() => setMobilePanel(panel)}><Icon className="h-4 w-4" />{panel}{panel === "comments" && threads.length > 0 ? ` (${threads.length})` : ""}</Button>;
       })}</nav>
       <div className="flex min-h-0 min-w-0 flex-1">
         {/* Left sidebar */}
-        <aside className={`${mobilePanel === "progress" ? "block" : "hidden"} w-full min-w-0 overflow-y-auto border-r bg-sidebar p-4 text-sm lg:block lg:w-52 lg:shrink-0 xl:w-60`}>
+        <aside className={`${mobilePanel === "progress" ? "block" : "hidden"} w-full min-w-0 overflow-y-auto bg-sidebar/80 p-5 text-sm lg:block lg:w-52 lg:shrink-0 lg:border-r xl:w-60`}>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Review progress</h3>
           <div className="mt-2 flex items-center gap-2">
             <Progress value={threads.length ? (resolved / threads.length) * 100 : 0} className="h-1.5" />
@@ -258,8 +258,8 @@ function Workspace() {
         </aside>
 
         {/* Center */}
-        <section className={`${mobilePanel === "document" ? "flex" : "hidden"} h-[70svh] min-w-0 flex-1 flex-col bg-canvas lg:flex lg:h-auto`}>
-          <div className="flex flex-wrap items-center gap-1 border-b bg-card px-3 py-2">
+        <section className={`${mobilePanel === "document" ? "flex" : "hidden"} h-[calc(100svh-17rem)] min-h-[28rem] min-w-0 flex-1 flex-col bg-canvas lg:flex lg:h-auto lg:min-h-0`}>
+          <div className="flex shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b bg-card/95 px-2 py-2 [scrollbar-width:none] sm:px-3 [&::-webkit-scrollbar]:hidden">
             <Button size="sm" variant={tool === "pen" ? "default" : "outline"} aria-pressed={tool === "pen"} onClick={() => setTool(tool === "pen" ? "select" : "pen")}><PenLine className="h-4 w-4" />Mark pen</Button>
             {tool === "pen" && <Select value={penMark} onValueChange={(value) => setPenMark(value as MarkStatus)}><SelectTrigger aria-label="Pen mark status" className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger><SelectContent>{(["incorrect", "correct", "needs_improvement", "corrected", "approved"] as MarkStatus[]).map((mark) => <SelectItem key={mark} value={mark}><span className={`mr-2 inline-block h-2 w-2 rounded-full ${MARK_TONE[mark].bg}`} />{MARK_LABEL[mark]}</SelectItem>)}</SelectContent></Select>}
             {savingMarks > 0 && <Loader2 aria-label="Saving mark" className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -289,7 +289,7 @@ function Workspace() {
                 </div>
               </>
             )}
-            <Button size="sm" variant="outline" onClick={() => createAnchor({ type: "general" })} className="ml-auto"><MessageSquarePlus className="h-4 w-4" />Add comment</Button>
+            <Button size="sm" variant="outline" onClick={() => createAnchor({ type: "general" })} className="ml-auto shrink-0"><MessageSquarePlus className="h-4 w-4" />Comment</Button>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
             <Suspense fallback={<div className="p-8 text-sm text-muted-foreground">Opening document…</div>}>
@@ -334,7 +334,7 @@ function Workspace() {
         </section>
 
         {/* Right */}
-        <aside className={`${mobilePanel === "comments" ? "block" : "hidden"} h-[70svh] w-full min-w-0 border-l bg-card lg:block lg:h-auto lg:w-80 lg:shrink-0 xl:w-96`}>
+        <aside className={`${mobilePanel === "comments" ? "block" : "hidden"} h-[calc(100svh-17rem)] min-h-[28rem] w-full min-w-0 bg-card lg:block lg:h-auto lg:min-h-0 lg:w-80 lg:shrink-0 lg:border-l xl:w-96`}>
           <div className="flex items-center justify-between border-b px-3 py-2 lg:hidden"><span className="text-sm font-semibold">Review comments</span><Button size="sm" variant="outline" onClick={() => createAnchor({ type: "general" })}><MessageSquarePlus className="h-4 w-4" />Add comment</Button></div>
           {me && (
             <CommentPanel
@@ -419,27 +419,27 @@ function WorkflowBar({
   if (isUploader && s === "approved") actions.push({ label: "Finalize", onClick: () => setStatus("finalized", "finalized") });
 
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b bg-card px-4 py-3">
-      <Link to="/dashboard" className="text-muted-foreground hover:text-foreground" aria-label="Back">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border/70 bg-card/80 px-3 py-3 backdrop-blur sm:px-4 lg:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
+      <Link to="/dashboard" className="grid h-9 w-9 place-items-center rounded-xl bg-muted text-muted-foreground transition hover:bg-accent hover:text-foreground" aria-label="Back">
         <ArrowLeft className="h-4 w-4" />
       </Link>
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h1 className="min-w-0 break-words font-display text-lg font-semibold text-primary">{paper.title}</h1>
+          <h1 className="min-w-0 break-words font-display text-base font-semibold text-foreground sm:text-lg">{paper.title}</h1>
           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTone(s)}`}>{STATUS_LABEL[s]}</span>
         </div>
         <div className="break-words font-mono text-xs text-muted-foreground">
           {paper.paper_code} · {[paper.exam_name, paper.subject, paper.test_number && `Test ${paper.test_number}`].filter(Boolean).join(" · ")} · Review cycles: {paper.review_cycle}
         </div>
       </div>
-      <span className={`col-span-2 flex items-center gap-1.5 text-xs ${live ? "text-success" : "text-muted-foreground"}`}>
+      <span className={`col-span-2 flex items-center gap-1.5 text-xs lg:col-span-1 ${live ? "text-success" : "text-muted-foreground"}`}>
         <span className={`h-2 w-2 rounded-full ${live ? "bg-success" : "bg-neutral"}`} />
         {live ? "Live" : "Reconnecting…"}
       </span>
-      <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2">
+      <div className="col-span-2 grid min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:col-span-1 lg:justify-end">
         {isUploader && (
           <Select value={paper.reviewer_id ?? ""} onValueChange={assign}>
-            <SelectTrigger className="h-8 w-48 text-xs">
+            <SelectTrigger className="h-9 w-full text-xs sm:w-48">
               <SelectValue placeholder="Assign reviewer" />
             </SelectTrigger>
             <SelectContent>
@@ -451,7 +451,7 @@ function WorkflowBar({
             </SelectContent>
           </Select>
         )}
-        <Button size="sm" variant="ghost" onClick={download}>
+        <Button size="sm" variant="outline" onClick={download}>
           <Download className="h-4 w-4" /> Original
         </Button>
         {actions.map((a) => (

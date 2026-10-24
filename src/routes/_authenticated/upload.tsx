@@ -99,9 +99,9 @@ function UploadPage() {
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((s) => ({ ...s, [k]: e.target.value }));
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-7 sm:px-6 sm:py-10">
-      <h1 className="font-display text-3xl font-semibold text-primary">Upload question paper</h1>
-      <form onSubmit={submit} className="mt-6 space-y-6">
+    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
+      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">New review</p><h1 className="mt-2 font-display text-3xl font-semibold text-foreground sm:text-4xl">Upload question paper</h1><p className="mt-2 text-sm text-muted-foreground">Add the original file and route it to the right reviewer.</p></div>
+      <form onSubmit={submit} className="mt-7 space-y-6 rounded-3xl border border-border/70 bg-card/85 p-4 shadow-[0_24px_60px_-45px_rgba(15,65,75,.7)] backdrop-blur sm:p-7">
         <label
           onDragOver={(e) => {
             e.preventDefault();
@@ -113,9 +113,9 @@ function UploadPage() {
             setDrag(false);
             pick(e.dataTransfer.files[0]);
           }}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-5 py-10 sm:p-12 text-center transition ${drag ? "border-primary bg-accent" : "border-border bg-secondary/40 hover:border-primary"}`}
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 py-10 text-center transition sm:p-12 ${drag ? "border-primary bg-accent" : "border-border bg-secondary/35 hover:border-primary hover:bg-accent/40"}`}
         >
-          <UploadCloud className="h-8 w-8 text-primary" />
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10"><UploadCloud className="h-7 w-7 text-primary" /></span>
           <div className="mt-4 max-w-full break-all font-medium">{file ? file.name : "Drop a PDF or Excel file here, or click to browse"}</div>
           <div className="text-xs text-muted-foreground">
             {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "PDF, XLSX, XLS · up to 50 MB"}
@@ -123,7 +123,7 @@ function UploadPage() {
           <input type="file" accept=".pdf,.xlsx,.xls" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
         </label>
 
-        <div className="grid gap-5 border-t pt-6 sm:grid-cols-2">
+        <div className="grid gap-5 border-t border-border/70 pt-6 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Paper title</Label>
             <Input required value={form.title} onChange={set("title")} />
@@ -156,7 +156,7 @@ function UploadPage() {
             </Select>
           </div>
         </div>
-        <Button className="h-11 w-full sm:w-auto" type="submit" disabled={busy || !file}>
+        <Button className="h-12 w-full sm:w-auto" type="submit" disabled={busy || !file}>
           {busy ? "Uploading…" : "Upload & create paper"}
         </Button>
       </form>

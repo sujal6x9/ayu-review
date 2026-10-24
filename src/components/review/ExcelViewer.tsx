@@ -79,7 +79,7 @@ export function ExcelViewer(p: Props) {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col">
-      {sel && <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-background px-3 py-2"><span className="truncate text-xs text-muted-foreground">{sheetName} · {sel}</span><Button size="sm" onClick={commentOnSelection}><MessageSquarePlus className="h-4 w-4" />Comment on {sel}</Button></div>}
+      {sel && <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-background px-3 py-2"><span className="truncate text-xs text-muted-foreground">{sheetName} · {sel}</span><Button size="sm" onClick={commentOnSelection}><MessageSquarePlus className="h-4 w-4" /><span className="hidden sm:inline">Comment on</span> {sel}</Button></div>}
       <div className="min-h-0 min-w-0 flex-1 overflow-auto">
         <table className="border-collapse font-sans text-xs">
           <thead className="sticky top-0 z-10">

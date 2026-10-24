@@ -59,7 +59,7 @@ export function PdfViewer(props: Props) {
   if (!doc) return <div className="p-8 text-muted-foreground">Opening PDF…</div>;
 
   return (
-    <div ref={containerRef} className="flex w-full flex-col items-start gap-6 px-3 py-6">
+    <div ref={containerRef} className="flex w-full flex-col items-center gap-5 px-2 py-4 sm:px-4 sm:py-6">
       {Array.from({ length: doc.numPages }, (_, i) => (
         <PdfPage key={i} doc={doc} pageNumber={i + 1} availableWidth={availableWidth} {...props} />
       ))}
@@ -126,7 +126,7 @@ function PdfPage({
   const mine = threads.filter((t) => (t.anchor as PdfAnchor).page === pageNumber);
 
   return (
-    <div id={`pdf-page-${pageNumber}`} className="relative shrink-0 bg-card shadow-md" style={{ width: Math.min(size.w, availableWidth * zoom), aspectRatio: `${size.w} / ${size.h}` }}>
+    <div id={`pdf-page-${pageNumber}`} className="relative shrink-0 bg-card shadow-[0_16px_45px_-24px_rgba(15,45,55,.7)]" style={{ width: Math.min(size.w, availableWidth * zoom), aspectRatio: `${size.w} / ${size.h}` }}>
       <canvas ref={canvasRef} className="block h-auto w-full" />
       <div
         ref={overlay}

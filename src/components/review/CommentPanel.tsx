@@ -60,7 +60,7 @@ export function CommentPanel(p: Props) {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto">
-      <div className="flex shrink-0 border-b text-sm">
+      <div className="flex shrink-0 border-b border-border/70 bg-card/90 text-sm">
         {(["comments", "activity"] as const).map((t) => (
           <Button variant="ghost" size="sm"
             key={t}
@@ -75,7 +75,7 @@ export function CommentPanel(p: Props) {
       {tab === "comments" ? (
         <>
           {p.pending && <Composer {...p} />}
-          <div className="space-y-2 border-b p-3">
+          <div className="space-y-2 border-b border-border/70 bg-muted/30 p-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input className="h-8 pl-8 text-xs" placeholder="Search comments" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -153,7 +153,7 @@ function Composer(p: Props) {
   }
 
   return (
-    <div className="shrink-0 space-y-2 border-b bg-accent/50 p-3">
+    <div className="shrink-0 space-y-2 border-b bg-accent/50 p-3 sm:p-4">
       <div className="flex items-center justify-between text-xs font-medium text-primary">
         New comment · {anchorLabel(p.pending)}
         <Button variant="ghost" size="sm" onClick={p.clearPending} aria-label="Cancel">
@@ -229,7 +229,7 @@ function Thread({ t, replies, ...p }: Props & { t: Comment; replies: Comment[] }
     <div
       id={`thread-${t.id}`}
       onClick={() => p.onFocus(t.id)}
-      className={`rounded-md border border-l-4 bg-card p-3 text-sm ${tone.border} ${focused ? "shadow-md ring-1 ring-ring" : ""} ${t.status === "resolved" ? "opacity-70" : ""}`}
+      className={`rounded-2xl border border-l-4 bg-card p-3 text-sm shadow-sm ${tone.border} ${focused ? "shadow-md ring-2 ring-ring/30" : ""} ${t.status === "resolved" ? "opacity-70" : ""}`}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs">
         {t.question_ref && <span className="rounded bg-primary px-1.5 py-0.5 font-semibold text-primary-foreground">{t.question_ref}</span>}
