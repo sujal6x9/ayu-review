@@ -410,7 +410,7 @@ function WorkflowBar({
     const status: PaperStatus = ["uploaded", "draft"].includes(paper.status) ? "assigned" : paper.status;
     const { error } = await supabase.from("papers").update({ reviewer_id: id, status }).eq("id", paper.id);
     if (error) { toast.error(error.message); return; }
-    await logActivity(paper.id, "assigned reviewer", r?.full_name ?? "");
+    await logActivity(paper.id, "assigned Dr", r?.full_name ?? "");
     onChanged();
   }
 
@@ -423,7 +423,7 @@ function WorkflowBar({
 
   async function copyReviewLink() {
     const reviewer = reviewers.find((candidate) => candidate.id === paper.reviewer_id);
-    if (!reviewer?.email) { toast.error("Assign a reviewer before creating the link."); return; }
+    if (!reviewer?.email) { toast.error("Assign a Dr before creating the link."); return; }
     const link = new URL(`/review/${paper.id}`, window.location.origin);
     link.searchParams.set("email", reviewer.email);
     try {
@@ -476,12 +476,12 @@ function WorkflowBar({
         {isUploader && (
           <Select value={paper.reviewer_id ?? ""} onValueChange={assign}>
             <SelectTrigger className="h-9 w-full text-xs sm:w-48">
-              <SelectValue placeholder="Assign reviewer" />
+              <SelectValue placeholder="Assign Dr" />
             </SelectTrigger>
             <SelectContent>
               {reviewers.map((r) => (
                 <SelectItem key={r.id} value={r.id}>
-                  Reviewer: {r.full_name}
+                  Dr {r.full_name}
                 </SelectItem>
               ))}
             </SelectContent>

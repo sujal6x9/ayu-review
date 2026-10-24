@@ -13,7 +13,7 @@ export const Route = createFileRoute("/review/$paperId")({
   head: () => ({
     meta: [
       { title: "Open paper review — Ayu Review" },
-      { name: "description", content: "Enter your reviewer credentials to open this protected paper." },
+      { name: "description", content: "Enter your Dr credentials to open this protected paper." },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -39,7 +39,7 @@ function ReviewAccessPage() {
       const { data: paper, error: paperError } = await supabase.from("papers").select("id,reviewer_id").eq("id", paperId).maybeSingle();
       if (paperError || !paper || paper.reviewer_id !== auth.user.id) {
         await supabase.auth.signOut();
-        throw new Error("This review link is not assigned to that reviewer account.");
+        throw new Error("This review link is not assigned to that Dr account.");
       }
       toast.success("Paper unlocked");
       navigate({ to: "/papers/$paperId", params: { paperId }, replace: true });
@@ -56,13 +56,13 @@ function ReviewAccessPage() {
       <Link to="/" className="mb-8 flex items-center gap-3 text-primary"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20"><FileCheck2 className="h-5 w-5" /></span><span className="font-display font-semibold">Ayu Review</span></Link>
       <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"><LockKeyhole className="h-4 w-4" />Protected review</div>
       <h1 className="font-display text-3xl font-semibold">Open your paper</h1>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">Enter the reviewer email and password provided by the paper creator.</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">Enter the Dr email and password provided by the paper creator.</p>
       <form onSubmit={unlock} className="mt-7 space-y-5">
-        <div className="space-y-2"><Label htmlFor="review-email">Reviewer email</Label><Input id="review-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></div>
+        <div className="space-y-2"><Label htmlFor="review-email">Dr email</Label><Input id="review-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></div>
         <div className="space-y-2"><Label htmlFor="review-password">Review password</Label><div className="relative"><Input id="review-password" type={showPassword ? "text" : "password"} autoComplete="current-password" required className="pr-12" value={password} onChange={(event) => setPassword(event.target.value)} /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1 h-9 w-9" onClick={() => setShowPassword((shown) => !shown)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
         <Button className="h-11 w-full" disabled={busy}>{busy ? "Opening…" : "Open review"}</Button>
       </form>
-      <p className="mt-6 border-t border-border/70 pt-5 text-xs leading-5 text-muted-foreground">This link opens only the paper assigned to your reviewer account.</p>
+      <p className="mt-6 border-t border-border/70 pt-5 text-xs leading-5 text-muted-foreground">This link opens only the paper assigned to your Dr account.</p>
     </section>
   </main>;
 }

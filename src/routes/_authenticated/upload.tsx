@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/upload")({
   head: () => ({
     meta: [
       { title: "Upload paper — Ayu Review" },
-      { name: "description", content: "Upload a PDF or Excel question paper and assign a reviewer." },
+      { name: "description", content: "Upload a PDF or Excel question paper and assign a Dr." },
       { property: "og:title", content: "Upload paper — Ayu Review" },
       { property: "og:description", content: "Upload a question paper for review." },
       { property: "og:type", content: "website" },
@@ -68,9 +68,9 @@ function UploadPage() {
       setReviewerForm({ fullName: "", email: "", password: "" });
       setShowReviewerForm(false);
       await qc.invalidateQueries({ queryKey: ["profiles"] });
-      toast.success(`${reviewer.fullName} can now review papers.`);
+      toast.success(`Dr ${reviewer.fullName} can now review papers.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to create reviewer.");
+      toast.error(error instanceof Error ? error.message : "Unable to create Dr account.");
     } finally {
       setCreatingReviewer(false);
     }
@@ -107,7 +107,7 @@ function UploadPage() {
       await logActivity(paper.id, "uploaded", file.name);
       if (form.reviewer_id) {
         const r = profiles.find((p) => p.id === form.reviewer_id);
-        await logActivity(paper.id, "assigned reviewer", r?.full_name ?? "");
+        await logActivity(paper.id, "assigned Dr", r?.full_name ?? "");
       }
       qc.invalidateQueries({ queryKey: ["papers"] });
       toast.success(`Paper ${paper.paper_code} created`);
@@ -123,7 +123,7 @@ function UploadPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
-      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">New review</p><h1 className="mt-2 font-display text-3xl font-semibold text-foreground sm:text-4xl">Upload question paper</h1><p className="mt-2 text-sm text-muted-foreground">Add the original file and route it to the right reviewer.</p></div>
+      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">New review</p><h1 className="mt-2 font-display text-3xl font-semibold text-foreground sm:text-4xl">Upload question paper</h1><p className="mt-2 text-sm text-muted-foreground">Add the original file and route it to the right Dr.</p></div>
       <form onSubmit={submit} className="mt-7 space-y-6 rounded-3xl border border-border/70 bg-card/85 p-4 shadow-[0_24px_60px_-45px_rgba(15,65,75,.7)] backdrop-blur sm:p-7">
         <label
           onDragOver={(e) => {
@@ -164,10 +164,10 @@ function UploadPage() {
             <Input value={form.test_number} onChange={set("test_number")} />
           </div>
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2"><Label>Assign reviewer</Label><Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setShowReviewerForm((shown) => !shown)}><UserPlus className="h-3.5 w-3.5" />New reviewer</Button></div>
+            <div className="flex items-center justify-between gap-2"><Label>Assign Dr</Label><Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setShowReviewerForm((shown) => !shown)}><UserPlus className="h-3.5 w-3.5" />New Dr</Button></div>
             <Select value={form.reviewer_id} onValueChange={(v) => setForm((s) => ({ ...s, reviewer_id: v }))}>
               <SelectTrigger>
-                <SelectValue placeholder={reviewers.length ? "Choose reviewer" : "No reviewers signed up yet"} />
+                <SelectValue placeholder={reviewers.length ? "Choose Dr" : "No Drs created yet"} />
               </SelectTrigger>
               <SelectContent>
                 {reviewers.map((r) => (
@@ -179,10 +179,10 @@ function UploadPage() {
             </Select>
           </div>
           {showReviewerForm && <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:col-span-2">
-            <div><h2 className="font-semibold">Create reviewer access</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Set the credentials the reviewer will use when opening a shared paper link.</p></div>
+            <div><h2 className="font-semibold">Create Dr access</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Set the credentials the Dr will use when opening a shared paper link.</p></div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5"><Label htmlFor="reviewer-name">Reviewer name</Label><Input id="reviewer-name" value={reviewerForm.fullName} onChange={(event) => setReviewerForm((current) => ({ ...current, fullName: event.target.value }))} /></div>
-              <div className="space-y-1.5"><Label htmlFor="reviewer-email">Reviewer email</Label><Input id="reviewer-email" type="email" value={reviewerForm.email} onChange={(event) => setReviewerForm((current) => ({ ...current, email: event.target.value }))} /></div>
+              <div className="space-y-1.5"><Label htmlFor="reviewer-name">Dr name</Label><Input id="reviewer-name" value={reviewerForm.fullName} onChange={(event) => setReviewerForm((current) => ({ ...current, fullName: event.target.value }))} /></div>
+              <div className="space-y-1.5"><Label htmlFor="reviewer-email">Dr email</Label><Input id="reviewer-email" type="email" value={reviewerForm.email} onChange={(event) => setReviewerForm((current) => ({ ...current, email: event.target.value }))} /></div>
               <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="reviewer-password">Review password</Label><div className="relative"><Input id="reviewer-password" type={showReviewerPassword ? "text" : "password"} minLength={8} autoComplete="new-password" className="pr-11" value={reviewerForm.password} onChange={(event) => setReviewerForm((current) => ({ ...current, password: event.target.value }))} /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1 h-8 w-8" aria-label={showReviewerPassword ? "Hide password" : "Show password"} onClick={() => setShowReviewerPassword((shown) => !shown)}>{showReviewerPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
             </div>
             <div className="flex flex-wrap justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setShowReviewerForm(false)}>Cancel</Button><Button type="button" disabled={creatingReviewer || reviewerForm.fullName.trim().length === 0 || reviewerForm.email.trim().length === 0 || reviewerForm.password.length < 8} onClick={addReviewer}><UserPlus className="h-4 w-4" />{creatingReviewer ? "Creating…" : "Create & select"}</Button></div>

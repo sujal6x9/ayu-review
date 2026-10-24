@@ -10,7 +10,7 @@ export const createReviewerAccount = createServerFn({ method: "POST" })
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "uploader" }),
     ]);
-    if (adminError || uploaderError) throw new Error("Unable to check reviewer-management permissions.");
+    if (adminError || uploaderError) throw new Error("Unable to check Dr-management permissions.");
     assertCanCreateReviewer(isAdmin, isUploader);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -38,7 +38,7 @@ export const createReviewerAccount = createServerFn({ method: "POST" })
     }
     if (createError) throw new Error(createError.message);
     const user = created.user;
-    if (!user) throw new Error("The reviewer account could not be created.");
+    if (!user) throw new Error("The Dr account could not be created.");
 
     const [{ error: profileError }, { error: roleError }] = await Promise.all([
       supabaseAdmin.from("profiles").update({ email: data.email, full_name: data.fullName }).eq("id", user.id),
@@ -46,7 +46,7 @@ export const createReviewerAccount = createServerFn({ method: "POST" })
     ]);
     if (profileError || roleError) {
       await supabaseAdmin.auth.admin.deleteUser(user.id);
-      throw new Error("Unable to save the reviewer; no account was retained. Try another email address.");
+      throw new Error("Unable to save the Dr account; no account was retained. Try another email address.");
     }
     return { id: user.id, email: data.email, fullName: data.fullName };
   });

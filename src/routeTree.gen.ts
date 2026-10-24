@@ -19,6 +19,8 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated/upload'
 import { Route as ReviewPaperIdRouteImport } from './routes/review.$paperId'
 import { Route as AuthenticatedPapersPaperIdRouteImport } from './routes/_authenticated/papers.$paperId'
+import { Route as AuthenticatedReviewersIndexRouteImport } from './routes/_authenticated/reviewers.index'
+import { Route as AuthenticatedReviewersReviewerIdRouteImport } from './routes/_authenticated/reviewers.$reviewerId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +72,18 @@ const AuthenticatedPapersPaperIdRoute =
     path: '/papers/$paperId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReviewersIndexRoute =
+  AuthenticatedReviewersIndexRouteImport.update({
+    id: '/reviewers/',
+    path: '/reviewers/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReviewersReviewerIdRoute =
+  AuthenticatedReviewersReviewerIdRouteImport.update({
+    id: '/reviewers/$reviewerId',
+    path: '/reviewers/$reviewerId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +95,8 @@ export interface FileRoutesByFullPath {
   '/upload': typeof AuthenticatedUploadRoute
   '/review/$paperId': typeof ReviewPaperIdRoute
   '/papers/$paperId': typeof AuthenticatedPapersPaperIdRoute
+  '/reviewers/$reviewerId': typeof AuthenticatedReviewersReviewerIdRoute
+  '/reviewers/': typeof AuthenticatedReviewersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,6 +108,8 @@ export interface FileRoutesByTo {
   '/upload': typeof AuthenticatedUploadRoute
   '/review/$paperId': typeof ReviewPaperIdRoute
   '/papers/$paperId': typeof AuthenticatedPapersPaperIdRoute
+  '/reviewers/$reviewerId': typeof AuthenticatedReviewersReviewerIdRoute
+  '/reviewers': typeof AuthenticatedReviewersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,6 +123,8 @@ export interface FileRoutesById {
   '/_authenticated/upload': typeof AuthenticatedUploadRoute
   '/review/$paperId': typeof ReviewPaperIdRoute
   '/_authenticated/papers/$paperId': typeof AuthenticatedPapersPaperIdRoute
+  '/_authenticated/reviewers/$reviewerId': typeof AuthenticatedReviewersReviewerIdRoute
+  '/_authenticated/reviewers/': typeof AuthenticatedReviewersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,6 +138,8 @@ export interface FileRouteTypes {
     | '/upload'
     | '/review/$paperId'
     | '/papers/$paperId'
+    | '/reviewers/$reviewerId'
+    | '/reviewers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +151,8 @@ export interface FileRouteTypes {
     | '/upload'
     | '/review/$paperId'
     | '/papers/$paperId'
+    | '/reviewers/$reviewerId'
+    | '/reviewers'
   id:
     | '__root__'
     | '/'
@@ -141,6 +165,8 @@ export interface FileRouteTypes {
     | '/_authenticated/upload'
     | '/review/$paperId'
     | '/_authenticated/papers/$paperId'
+    | '/_authenticated/reviewers/$reviewerId'
+    | '/_authenticated/reviewers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -224,6 +250,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPapersPaperIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reviewers/': {
+      id: '/_authenticated/reviewers/'
+      path: '/reviewers'
+      fullPath: '/reviewers/'
+      preLoaderRoute: typeof AuthenticatedReviewersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reviewers/$reviewerId': {
+      id: '/_authenticated/reviewers/$reviewerId'
+      path: '/reviewers/$reviewerId'
+      fullPath: '/reviewers/$reviewerId'
+      preLoaderRoute: typeof AuthenticatedReviewersReviewerIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -232,6 +272,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedUploadRoute: typeof AuthenticatedUploadRoute
   AuthenticatedPapersPaperIdRoute: typeof AuthenticatedPapersPaperIdRoute
+  AuthenticatedReviewersReviewerIdRoute: typeof AuthenticatedReviewersReviewerIdRoute
+  AuthenticatedReviewersIndexRoute: typeof AuthenticatedReviewersIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -239,6 +281,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedUploadRoute: AuthenticatedUploadRoute,
   AuthenticatedPapersPaperIdRoute: AuthenticatedPapersPaperIdRoute,
+  AuthenticatedReviewersReviewerIdRoute: AuthenticatedReviewersReviewerIdRoute,
+  AuthenticatedReviewersIndexRoute: AuthenticatedReviewersIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

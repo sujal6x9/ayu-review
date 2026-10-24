@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountEmailSchema, accountHome, assertAdmin, assertCanCreateReviewer, changeRoleSchema, createAccountSchema, createReviewerSchema, editableAccountRole } from "@/lib/accounts";
+import { accountEmailSchema, accountHome, assertAdmin, assertCanCreateReviewer, changeRoleSchema, createAccountSchema, createReviewerSchema, doctorName, editableAccountRole } from "@/lib/accounts";
 
 describe("Admin-controlled accounts", () => {
   it("allows changing a reviewer to paper creator and back", () => {
@@ -49,5 +49,9 @@ describe("Admin-controlled accounts", () => {
     expect(() => assertCanCreateReviewer(true, false)).not.toThrow();
     expect(() => assertCanCreateReviewer(false, false)).toThrow("Only paper creators");
     expect(createReviewerSchema.parse({ email: "reviewer@example.com", fullName: "Reviewer", password: "A-valid-test-password9!" }).email).toBe("reviewer@example.com");
+  });
+  it("presents reviewer names using the Dr title", () => {
+    expect(doctorName("Ayu Sharma")).toBe("Dr Ayu Sharma");
+    expect(doctorName("Dr. Mehta")).toBe("Dr. Mehta");
   });
 });

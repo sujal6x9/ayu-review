@@ -132,7 +132,7 @@ function Dashboard() {
           const s = stats(p); const prog = paperProgress(p, s.total, s.total - s.open);
           return <article key={p.id} className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-3.5 shadow-sm min-[380px]:p-4">
             <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${p.file_type === "excel" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{p.file_type === "excel" ? <FileSpreadsheet className="h-5 w-5" /> : <FileText className="h-5 w-5" />}</span><div className="min-w-0"><Link to="/papers/$paperId" params={{ paperId: p.id }} className="flex min-w-0 items-start gap-1 font-semibold leading-snug text-foreground"><span className="min-w-0 break-all min-[380px]:break-words">{p.title}</span><ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /></Link><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground min-[380px]:text-[11px]">{p.paper_code} · {new Date(p.created_at).toLocaleDateString()}</p><span className={`mt-2 inline-flex max-w-full rounded-full px-2 py-1 text-[10px] font-semibold ${statusTone(p.status)}`}>{STATUS_LABEL[p.status]}</span></div></div>
-            <div className="mt-4 grid grid-cols-1 gap-3 text-xs min-[380px]:grid-cols-2"><div className="min-w-0"><p className="text-muted-foreground">Exam / subject</p><p className="mt-1 break-words font-medium">{[p.exam_name, p.subject].filter(Boolean).join(" · ") || "—"}</p></div><div className="min-w-0"><p className="text-muted-foreground">Reviewer</p><p className="mt-1 break-words font-medium">{nameOf(p.reviewer_id)}</p></div></div>
+            <div className="mt-4 grid grid-cols-1 gap-3 text-xs min-[380px]:grid-cols-2"><div className="min-w-0"><p className="text-muted-foreground">Exam / subject</p><p className="mt-1 break-words font-medium">{[p.exam_name, p.subject].filter(Boolean).join(" · ") || "—"}</p></div><div className="min-w-0"><p className="text-muted-foreground">Dr</p><p className="mt-1 break-words font-medium">{nameOf(p.reviewer_id)}</p></div></div>
             <div className="mt-4 min-w-0 border-t border-border/70 pt-3"><div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-1 text-xs"><span className={`min-w-0 break-words ${s.open ? "font-medium text-destructive" : "text-muted-foreground"}`}>{s.open ? `${s.open} unresolved` : `${s.total} comments`}</span><span className="shrink-0 font-semibold">{prog}%</span></div><Progress value={prog} className="h-1.5 max-w-full" /></div>
           </article>;
         })}
@@ -146,7 +146,7 @@ function Dashboard() {
               <th className="px-4 py-3">Paper</th>
               <th className="px-4 py-3">Exam / Subject</th>
               <th className="px-4 py-3">Uploader</th>
-              <th className="px-4 py-3">Reviewer</th>
+              <th className="px-4 py-3">Dr</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Issues</th>
               <th className="px-4 py-3 w-40">Progress</th>
