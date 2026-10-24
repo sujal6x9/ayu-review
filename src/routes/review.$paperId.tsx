@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Eye, EyeOff, FileCheck2, LockKeyhole } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -66,9 +66,12 @@ function ReviewAccessPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,color-mix(in_oklch,var(--color-primary)_13%,transparent),transparent_35rem)]" />
       <section className="relative z-10 w-full max-w-md rounded-3xl border border-border/70 bg-card/90 p-5 shadow-[0_30px_80px_-45px_rgba(15,65,75,.7)] backdrop-blur-xl sm:p-8">
         <Link to="/" className="mb-8 flex items-center gap-3 text-primary">
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary text-primary-foreground">
-            <FileCheck2 className="h-5 w-5" />
-          </span>
+          <img
+            src="/ayu-scholar-mark.png"
+            alt=""
+            aria-hidden="true"
+            className="h-11 w-11 shrink-0 object-contain drop-shadow-sm"
+          />
           <span className="font-display font-semibold">Ayu Review</span>
         </Link>
         <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
