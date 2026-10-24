@@ -7,6 +7,7 @@ export const createAccountSchema = z.object({
   password: z.string().min(8).max(128),
   role: z.enum(["reviewer", "uploader"]),
 });
+export const createReviewerSchema = createAccountSchema.omit({ role: true });
 export const resetAccountSchema = z.object({ userId: z.string().uuid(), password: z.string().min(8).max(128) });
 export const changeRoleSchema = z.object({ userId: z.string().uuid(), role: z.enum(["reviewer", "uploader"]) });
 export function editableAccountRole(roles: readonly string[]) {
@@ -17,6 +18,9 @@ export function editableAccountRole(roles: readonly string[]) {
 }
 export function assertAdmin(allowed: boolean | null) {
   if (allowed !== true) throw new Error("Only administrators can manage accounts.");
+}
+export function assertCanCreateReviewer(isAdmin: boolean | null, isUploader: boolean | null) {
+  if (isAdmin !== true && isUploader !== true) throw new Error("Only paper creators and administrators can create reviewers.");
 }
 export function accountHome(roles: readonly string[]) {
   return roles.includes("admin") ? "/admin" as const : "/dashboard" as const;

@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated/upload'
+import { Route as ReviewPaperIdRouteImport } from './routes/review.$paperId'
 import { Route as AuthenticatedPapersPaperIdRouteImport } from './routes/_authenticated/papers.$paperId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedUploadRoute = AuthenticatedUploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ReviewPaperIdRoute = ReviewPaperIdRouteImport.update({
+  id: '/review/$paperId',
+  path: '/review/$paperId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPapersPaperIdRoute =
   AuthenticatedPapersPaperIdRouteImport.update({
     id: '/papers/$paperId',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/upload': typeof AuthenticatedUploadRoute
+  '/review/$paperId': typeof ReviewPaperIdRoute
   '/papers/$paperId': typeof AuthenticatedPapersPaperIdRoute
 }
 export interface FileRoutesByTo {
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/upload': typeof AuthenticatedUploadRoute
+  '/review/$paperId': typeof ReviewPaperIdRoute
   '/papers/$paperId': typeof AuthenticatedPapersPaperIdRoute
 }
 export interface FileRoutesById {
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/upload': typeof AuthenticatedUploadRoute
+  '/review/$paperId': typeof ReviewPaperIdRoute
   '/_authenticated/papers/$paperId': typeof AuthenticatedPapersPaperIdRoute
 }
 export interface FileRouteTypes {
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/upload'
+    | '/review/$paperId'
     | '/papers/$paperId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/upload'
+    | '/review/$paperId'
     | '/papers/$paperId'
   id:
     | '__root__'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/upload'
+    | '/review/$paperId'
     | '/_authenticated/papers/$paperId'
   fileRoutesById: FileRoutesById
 }
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ReviewPaperIdRoute: typeof ReviewPaperIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -197,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUploadRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/review/$paperId': {
+      id: '/review/$paperId'
+      path: '/review/$paperId'
+      fullPath: '/review/$paperId'
+      preLoaderRoute: typeof ReviewPaperIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/papers/$paperId': {
       id: '/_authenticated/papers/$paperId'
       path: '/papers/$paperId'
@@ -230,6 +250,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ReviewPaperIdRoute: ReviewPaperIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UploadCloud } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UploadCloud } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles } from "@/lib/auth";
 import { logActivity } from "@/lib/papers";
+import { createReviewerAccount } from "@/lib/reviewer.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,9 +42,14 @@ function UploadPage() {
   const { data: me } = useMe();
   const { data: profiles = [] } = useProfiles();
   const reviewers = profiles.filter((p) => p.roles.includes("reviewer") && p.id !== me?.id);
+  const createReviewer = useServerFn(createReviewerAccount);
   const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [creatingReviewer, setCreatingReviewer] = useState(false);
+  const [showReviewerForm, setShowReviewerForm] = useState(false);
+  const [showReviewerPassword, setShowReviewerPassword] = useState(false);
+  const [reviewerForm, setReviewerForm] = useState({ fullName: "", email: "", password: "" });
   const [form, setForm] = useState({ title: "", exam_name: "", subject: "", test_number: "", reviewer_id: "" });
 
   function pick(f: File | undefined) {
@@ -51,6 +58,22 @@ function UploadPage() {
     if (f.size > MAX) { toast.error("File is larger than 50 MB."); return; }
     setFile(f);
     if (!form.title) setForm((s) => ({ ...s, title: f.name.replace(/\.[^.]+$/, "") }));
+  }
+
+  async function addReviewer() {
+    setCreatingReviewer(true);
+    try {
+      const reviewer = await createReviewer({ data: reviewerForm });
+      setForm((current) => ({ ...current, reviewer_id: reviewer.id }));
+      setReviewerForm({ fullName: "", email: "", password: "" });
+      setShowReviewerForm(false);
+      await qc.invalidateQueries({ queryKey: ["profiles"] });
+      toast.success(`${reviewer.fullName} can now review papers.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create reviewer.");
+    } finally {
+      setCreatingReviewer(false);
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -141,7 +164,7 @@ function UploadPage() {
             <Input value={form.test_number} onChange={set("test_number")} />
           </div>
           <div className="space-y-1.5">
-            <Label>Assign reviewer</Label>
+            <div className="flex items-center justify-between gap-2"><Label>Assign reviewer</Label><Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setShowReviewerForm((shown) => !shown)}><UserPlus className="h-3.5 w-3.5" />New reviewer</Button></div>
             <Select value={form.reviewer_id} onValueChange={(v) => setForm((s) => ({ ...s, reviewer_id: v }))}>
               <SelectTrigger>
                 <SelectValue placeholder={reviewers.length ? "Choose reviewer" : "No reviewers signed up yet"} />
@@ -155,6 +178,15 @@ function UploadPage() {
               </SelectContent>
             </Select>
           </div>
+          {showReviewerForm && <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:col-span-2">
+            <div><h2 className="font-semibold">Create reviewer access</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Set the credentials the reviewer will use when opening a shared paper link.</p></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5"><Label htmlFor="reviewer-name">Reviewer name</Label><Input id="reviewer-name" value={reviewerForm.fullName} onChange={(event) => setReviewerForm((current) => ({ ...current, fullName: event.target.value }))} /></div>
+              <div className="space-y-1.5"><Label htmlFor="reviewer-email">Reviewer email</Label><Input id="reviewer-email" type="email" value={reviewerForm.email} onChange={(event) => setReviewerForm((current) => ({ ...current, email: event.target.value }))} /></div>
+              <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="reviewer-password">Review password</Label><div className="relative"><Input id="reviewer-password" type={showReviewerPassword ? "text" : "password"} minLength={8} autoComplete="new-password" className="pr-11" value={reviewerForm.password} onChange={(event) => setReviewerForm((current) => ({ ...current, password: event.target.value }))} /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1 h-8 w-8" aria-label={showReviewerPassword ? "Hide password" : "Show password"} onClick={() => setShowReviewerPassword((shown) => !shown)}>{showReviewerPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setShowReviewerForm(false)}>Cancel</Button><Button type="button" disabled={creatingReviewer || reviewerForm.fullName.trim().length === 0 || reviewerForm.email.trim().length === 0 || reviewerForm.password.length < 8} onClick={addReviewer}><UserPlus className="h-4 w-4" />{creatingReviewer ? "Creating…" : "Create & select"}</Button></div>
+          </div>}
         </div>
         <Button className="h-12 w-full sm:w-auto" type="submit" disabled={busy || !file}>
           {busy ? "Uploading…" : "Upload & create paper"}

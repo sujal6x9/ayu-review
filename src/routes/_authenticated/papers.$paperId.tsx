@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Download, MousePointer2, Search, SquareDashedMousePointer, ZoomIn, ZoomOut, MessageSquarePlus, FileText, MessagesSquare, ChartNoAxesColumn, PenLine, Loader2, Undo2 } from "lucide-react";
+import { ArrowLeft, Download, Link2, MousePointer2, Search, SquareDashedMousePointer, ZoomIn, ZoomOut, MessageSquarePlus, FileText, MessagesSquare, ChartNoAxesColumn, PenLine, Loader2, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles } from "@/lib/auth";
 import {
@@ -393,7 +393,7 @@ function WorkflowBar({
   isUploader: boolean;
   isReviewer: boolean;
   live: boolean;
-  reviewers: { id: string; full_name: string }[];
+  reviewers: { id: string; full_name: string; email: string }[];
   onChanged: () => void;
   openIssues: number;
 }) {
@@ -419,6 +419,19 @@ function WorkflowBar({
     const { data, error } = await supabase.storage.from("papers").createSignedUrl(paper.file_path, 300, { download: paper.file_name ?? true });
     if (error) { toast.error(error.message); return; }
     window.open(data.signedUrl, "_blank");
+  }
+
+  async function copyReviewLink() {
+    const reviewer = reviewers.find((candidate) => candidate.id === paper.reviewer_id);
+    if (!reviewer?.email) { toast.error("Assign a reviewer before creating the link."); return; }
+    const link = new URL(`/review/${paper.id}`, window.location.origin);
+    link.searchParams.set("email", reviewer.email);
+    try {
+      await navigator.clipboard.writeText(link.toString());
+      toast.success("Protected review link copied");
+    } catch {
+      toast.error("Could not copy the link. Allow clipboard access and try again.");
+    }
   }
 
   const s = paper.status;
@@ -474,6 +487,7 @@ function WorkflowBar({
             </SelectContent>
           </Select>
         )}
+        {isUploader && paper.reviewer_id && <Button size="sm" variant="outline" onClick={copyReviewLink}><Link2 className="h-4 w-4" />Share review</Button>}
         <Button size="sm" variant="outline" onClick={download}>
           <Download className="h-4 w-4" /> Original
         </Button>
