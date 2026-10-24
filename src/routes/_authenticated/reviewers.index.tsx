@@ -66,7 +66,11 @@ function DoctorsPage() {
       setForm({ name: "", specialization: "" });
       setShowCreate(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to add Dr.");
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Unable to add Dr.";
+      toast.error(message);
     } finally {
       setBusy(false);
     }
