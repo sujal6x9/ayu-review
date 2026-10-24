@@ -1,231 +1,274 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.18"
-  }
+    PostgrestVersion: "14.18";
+  };
   public: {
     Tables: {
+      doctors: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: string;
+          name: string;
+          specialization: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          name: string;
+          specialization?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          name?: string;
+          specialization?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       activity: {
         Row: {
-          action: string
-          actor_id: string
-          created_at: string
-          details: string
-          id: string
-          paper_id: string
-        }
+          action: string;
+          actor_id: string;
+          created_at: string;
+          details: string;
+          id: string;
+          paper_id: string;
+        };
         Insert: {
-          action: string
-          actor_id: string
-          created_at?: string
-          details?: string
-          id?: string
-          paper_id: string
-        }
+          action: string;
+          actor_id: string;
+          created_at?: string;
+          details?: string;
+          id?: string;
+          paper_id: string;
+        };
         Update: {
-          action?: string
-          actor_id?: string
-          created_at?: string
-          details?: string
-          id?: string
-          paper_id?: string
-        }
+          action?: string;
+          actor_id?: string;
+          created_at?: string;
+          details?: string;
+          id?: string;
+          paper_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "activity_paper_id_fkey"
-            columns: ["paper_id"]
-            isOneToOne: false
-            referencedRelation: "papers"
-            referencedColumns: ["id"]
+            foreignKeyName: "activity_paper_id_fkey";
+            columns: ["paper_id"];
+            isOneToOne: false;
+            referencedRelation: "papers";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       comments: {
         Row: {
-          anchor: Json
-          author_id: string
-          body: string
-          created_at: string
-          id: string
-          mark: Database["public"]["Enums"]["mark_status"]
-          paper_id: string
-          parent_id: string | null
-          question_ref: string
-          status: Database["public"]["Enums"]["comment_status"]
-          suggested_correction: string
-          updated_at: string
-        }
+          anchor: Json;
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          mark: Database["public"]["Enums"]["mark_status"];
+          paper_id: string;
+          parent_id: string | null;
+          question_ref: string;
+          status: Database["public"]["Enums"]["comment_status"];
+          suggested_correction: string;
+          updated_at: string;
+        };
         Insert: {
-          anchor?: Json
-          author_id: string
-          body: string
-          created_at?: string
-          id?: string
-          mark?: Database["public"]["Enums"]["mark_status"]
-          paper_id: string
-          parent_id?: string | null
-          question_ref?: string
-          status?: Database["public"]["Enums"]["comment_status"]
-          suggested_correction?: string
-          updated_at?: string
-        }
+          anchor?: Json;
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          mark?: Database["public"]["Enums"]["mark_status"];
+          paper_id: string;
+          parent_id?: string | null;
+          question_ref?: string;
+          status?: Database["public"]["Enums"]["comment_status"];
+          suggested_correction?: string;
+          updated_at?: string;
+        };
         Update: {
-          anchor?: Json
-          author_id?: string
-          body?: string
-          created_at?: string
-          id?: string
-          mark?: Database["public"]["Enums"]["mark_status"]
-          paper_id?: string
-          parent_id?: string | null
-          question_ref?: string
-          status?: Database["public"]["Enums"]["comment_status"]
-          suggested_correction?: string
-          updated_at?: string
-        }
+          anchor?: Json;
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          mark?: Database["public"]["Enums"]["mark_status"];
+          paper_id?: string;
+          parent_id?: string | null;
+          question_ref?: string;
+          status?: Database["public"]["Enums"]["comment_status"];
+          suggested_correction?: string;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "comments_paper_id_fkey"
-            columns: ["paper_id"]
-            isOneToOne: false
-            referencedRelation: "papers"
-            referencedColumns: ["id"]
+            foreignKeyName: "comments_paper_id_fkey";
+            columns: ["paper_id"];
+            isOneToOne: false;
+            referencedRelation: "papers";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "comments"
-            referencedColumns: ["id"]
+            foreignKeyName: "comments_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       papers: {
         Row: {
-          created_at: string
-          exam_name: string
-          file_name: string | null
-          file_path: string | null
-          file_type: string | null
-          id: string
-          paper_code: string
-          review_cycle: number
-          reviewer_id: string | null
-          status: Database["public"]["Enums"]["paper_status"]
-          subject: string
-          test_number: string
-          title: string
-          updated_at: string
-          uploader_id: string
-        }
+          created_at: string;
+          doctor_id: string | null;
+          exam_name: string;
+          file_name: string | null;
+          file_path: string | null;
+          file_type: string | null;
+          id: string;
+          paper_code: string;
+          review_cycle: number;
+          reviewer_id: string | null;
+          status: Database["public"]["Enums"]["paper_status"];
+          subject: string;
+          test_number: string;
+          title: string;
+          updated_at: string;
+          uploader_id: string;
+        };
         Insert: {
-          created_at?: string
-          exam_name?: string
-          file_name?: string | null
-          file_path?: string | null
-          file_type?: string | null
-          id?: string
-          paper_code?: string
-          review_cycle?: number
-          reviewer_id?: string | null
-          status?: Database["public"]["Enums"]["paper_status"]
-          subject?: string
-          test_number?: string
-          title: string
-          updated_at?: string
-          uploader_id: string
-        }
+          created_at?: string;
+          doctor_id?: string | null;
+          exam_name?: string;
+          file_name?: string | null;
+          file_path?: string | null;
+          file_type?: string | null;
+          id?: string;
+          paper_code?: string;
+          review_cycle?: number;
+          reviewer_id?: string | null;
+          status?: Database["public"]["Enums"]["paper_status"];
+          subject?: string;
+          test_number?: string;
+          title: string;
+          updated_at?: string;
+          uploader_id: string;
+        };
         Update: {
-          created_at?: string
-          exam_name?: string
-          file_name?: string | null
-          file_path?: string | null
-          file_type?: string | null
-          id?: string
-          paper_code?: string
-          review_cycle?: number
-          reviewer_id?: string | null
-          status?: Database["public"]["Enums"]["paper_status"]
-          subject?: string
-          test_number?: string
-          title?: string
-          updated_at?: string
-          uploader_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          doctor_id?: string | null;
+          exam_name?: string;
+          file_name?: string | null;
+          file_path?: string | null;
+          file_type?: string | null;
+          id?: string;
+          paper_code?: string;
+          review_cycle?: number;
+          reviewer_id?: string | null;
+          status?: Database["public"]["Enums"]["paper_status"];
+          subject?: string;
+          test_number?: string;
+          title?: string;
+          updated_at?: string;
+          uploader_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "papers_doctor_id_fkey";
+            columns: ["doctor_id"];
+            isOneToOne: false;
+            referencedRelation: "doctors";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-        }
+          created_at: string;
+          email: string;
+          full_name: string;
+          id: string;
+        };
         Insert: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          id: string
-        }
+          created_at?: string;
+          email?: string;
+          full_name?: string;
+          id: string;
+        };
         Update: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          email?: string;
+          full_name?: string;
+          id?: string;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Insert: {
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          id?: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Update: {
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-    }
+          id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      can_access_paper: { Args: { _paper_id: string }; Returns: boolean }
+      can_access_paper: { Args: { _paper_id: string }; Returns: boolean };
+      configure_paper_share: {
+        Args: { _doctor_id: string; _paper_id: string; _password: string };
+        Returns: string;
+      };
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-    }
+          _role: Database["public"]["Enums"]["app_role"];
+          _user_id: string;
+        };
+        Returns: boolean;
+      };
+      unlock_paper_share: {
+        Args: { _password: string; _token: string };
+        Returns: string;
+      };
+      update_paper_review_status: {
+        Args: {
+          _paper_id: string;
+          _review_cycle: number;
+          _status: Database["public"]["Enums"]["paper_status"];
+        };
+        Returns: undefined;
+      };
+    };
     Enums: {
-      app_role: "admin" | "uploader" | "reviewer"
-      comment_status: "open" | "resolved"
+      app_role: "admin" | "uploader" | "reviewer";
+      comment_status: "open" | "resolved";
       mark_status:
-        | "none"
-        | "correct"
-        | "incorrect"
-        | "needs_improvement"
-        | "corrected"
-        | "approved"
+        "none" | "correct" | "incorrect" | "needs_improvement" | "corrected" | "approved";
       paper_status:
         | "draft"
         | "uploaded"
@@ -235,144 +278,131 @@ export type Database = {
         | "corrections_in_progress"
         | "resubmitted"
         | "approved"
-        | "finalized"
-    }
+        | "finalized";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "uploader", "reviewer"],
       comment_status: ["open", "resolved"],
-      mark_status: [
-        "none",
-        "correct",
-        "incorrect",
-        "needs_improvement",
-        "corrected",
-        "approved",
-      ],
+      mark_status: ["none", "correct", "incorrect", "needs_improvement", "corrected", "approved"],
       paper_status: [
         "draft",
         "uploaded",
@@ -386,4 +416,4 @@ export const Constants = {
       ],
     },
   },
-} as const
+} as const;

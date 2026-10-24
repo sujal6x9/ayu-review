@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet, FileText, Search, Upload, ArrowUpRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMe, useProfiles } from "@/lib/auth";
+import { useDoctors, useMe, useProfiles } from "@/lib/auth";
 import { STATUS_LABEL, paperProgress, statusTone, type Paper } from "@/lib/papers";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,13 +29,22 @@ function Dashboard() {
   const qc = useQueryClient();
   const { data: me } = useMe();
   const { data: profiles = [] } = useProfiles();
+  const { data: doctors = [] } = useDoctors();
   const [view, setView] = useState<View>("all");
   const [q, setQ] = useState("");
 
-  const { data: papers = [], isPending: papersLoading, isError: papersError, refetch } = useQuery({
+  const {
+    data: papers = [],
+    isPending: papersLoading,
+    isError: papersError,
+    refetch,
+  } = useQuery({
     queryKey: ["papers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("papers").select("*").order("updated_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("papers")
+        .select("*")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -63,8 +72,16 @@ function Dashboard() {
     };
   }, [qc]);
 
-  const names = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.full_name])), [profiles]);
+  const names = useMemo(
+    () => new Map(profiles.map((profile) => [profile.id, profile.full_name])),
+    [profiles],
+  );
   const nameOf = (id: string | null) => (id ? names.get(id) || "—" : "Unassigned");
+  const doctorNames = useMemo(
+    () => new Map(doctors.map((doctor) => [doctor.id, doctor.name])),
+    [doctors],
+  );
+  const doctorOf = (id: string | null) => (id ? doctorNames.get(id) || "—" : "Unassigned");
   const commentCounts = useMemo(() => {
     const counts = new Map<string, { total: number; open: number }>();
     for (const comment of comments) {
@@ -88,55 +105,176 @@ function Dashboard() {
   const filtered = useMemo(() => {
     return papers.filter((p) => {
       if (view === "uploads" && p.uploader_id !== me?.id) return false;
-      if (view === "assigned" && p.reviewer_id !== me?.id) return false;
+      if (view === "assigned" && (me?.roles.length ? !p.doctor_id : false)) return false;
       if (view === "completed" && !["approved", "finalized"].includes(p.status)) return false;
       const s = q.toLowerCase();
-      return !s || [p.title, p.paper_code, p.subject, p.exam_name].some((v) => v.toLowerCase().includes(s));
+      return (
+        !s ||
+        [p.title, p.paper_code, p.subject, p.exam_name].some((v) => v.toLowerCase().includes(s))
+      );
     });
   }, [papers, view, q, me]);
 
   const unresolved = comments.filter((c) => c.status === "open").length;
   const cards = [
     { label: "Total papers", value: papers.length },
-    { label: "Pending review", value: papers.filter((p) => ["uploaded", "assigned", "resubmitted"].includes(p.status)).length },
+    {
+      label: "Pending review",
+      value: papers.filter((p) => ["uploaded", "assigned", "resubmitted"].includes(p.status))
+        .length,
+    },
     { label: "Under review", value: papers.filter((p) => p.status === "under_review").length },
-    { label: "Corrections required", value: papers.filter((p) => ["changes_requested", "corrections_in_progress"].includes(p.status)).length, tone: "text-destructive" },
-    { label: "Approved", value: papers.filter((p) => ["approved", "finalized"].includes(p.status)).length, tone: "text-success" },
+    {
+      label: "Corrections required",
+      value: papers.filter((p) =>
+        ["changes_requested", "corrections_in_progress"].includes(p.status),
+      ).length,
+      tone: "text-destructive",
+    },
+    {
+      label: "Approved",
+      value: papers.filter((p) => ["approved", "finalized"].includes(p.status)).length,
+      tone: "text-success",
+    },
     { label: "Unresolved comments", value: unresolved, tone: "text-warning" },
   ];
 
   return (
     <main className="mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-2.5 py-5 min-[320px]:px-3 min-[380px]:px-4 sm:px-6 sm:py-10">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 sm:gap-4"><div className="min-w-0"><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary sm:mb-2 sm:text-xs">Your workspace</p><h1 className="break-words font-display text-2xl font-semibold text-foreground min-[380px]:text-3xl sm:text-4xl">Question papers</h1><p className="mt-2 hidden text-sm text-muted-foreground sm:block">Track every review from upload to final approval.</p></div>{(me?.roles.includes("uploader") || isAdmin) && <Button asChild size="sm" className="shrink-0 sm:h-10 sm:px-4"><Link to="/upload"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload paper</span><span className="sm:hidden">Upload</span></Link></Button>}</div>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary sm:mb-2 sm:text-xs">
+            Your workspace
+          </p>
+          <h1 className="break-words font-display text-2xl font-semibold text-foreground min-[380px]:text-3xl sm:text-4xl">
+            Question papers
+          </h1>
+          <p className="mt-2 hidden text-sm text-muted-foreground sm:block">
+            Track every review from upload to final approval.
+          </p>
+        </div>
+        {(me?.roles.includes("uploader") || isAdmin) && (
+          <Button asChild size="sm" className="shrink-0 sm:h-10 sm:px-4">
+            <Link to="/upload">
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">Upload paper</span>
+              <span className="sm:hidden">Upload</span>
+            </Link>
+          </Button>
+        )}
+      </div>
       <div className="mt-5 grid grid-cols-1 gap-2 min-[280px]:grid-cols-2 min-[380px]:gap-3 sm:mt-7 sm:grid-cols-3 xl:grid-cols-6">
         {cards.map((c) => (
-          <div key={c.label} className="min-w-0 rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm backdrop-blur min-[380px]:rounded-2xl sm:p-4">
-            <div className="min-h-7 text-[10px] font-semibold uppercase leading-3.5 tracking-wide text-muted-foreground min-[380px]:text-[11px]">{c.label}</div>
-            <div className={`mt-1.5 font-display text-2xl font-semibold min-[380px]:mt-3 min-[380px]:text-3xl ${c.tone ?? "text-foreground"}`}>{papersLoading ? "—" : c.value}</div>
+          <div
+            key={c.label}
+            className="min-w-0 rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm backdrop-blur min-[380px]:rounded-2xl sm:p-4"
+          >
+            <div className="min-h-7 text-[10px] font-semibold uppercase leading-3.5 tracking-wide text-muted-foreground min-[380px]:text-[11px]">
+              {c.label}
+            </div>
+            <div
+              className={`mt-1.5 font-display text-2xl font-semibold min-[380px]:mt-3 min-[380px]:text-3xl ${c.tone ?? "text-foreground"}`}
+            >
+              {papersLoading ? "—" : c.value}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="mt-6 min-w-0 rounded-2xl border border-border/70 bg-card/70 p-2 shadow-sm backdrop-blur sm:mt-8 lg:flex lg:items-center">
-        <div className="grid min-w-0 grid-cols-1 gap-1 min-[280px]:grid-cols-2 min-[520px]:grid-cols-4 lg:flex">{views.map((v) => (
-          <Button variant={view === v.key ? "secondary" : "ghost"} key={v.key} onClick={() => setView(v.key)} className={`min-w-0 whitespace-normal px-2 text-xs min-[380px]:text-sm lg:shrink-0 lg:px-4 ${view === v.key ? "text-primary" : "text-muted-foreground"}`}>{v.label}</Button>
-        ))}</div>
+        <div className="grid min-w-0 grid-cols-1 gap-1 min-[280px]:grid-cols-2 min-[520px]:grid-cols-4 lg:flex">
+          {views.map((v) => (
+            <Button
+              variant={view === v.key ? "secondary" : "ghost"}
+              key={v.key}
+              onClick={() => setView(v.key)}
+              className={`min-w-0 whitespace-normal px-2 text-xs min-[380px]:text-sm lg:shrink-0 lg:px-4 ${view === v.key ? "text-primary" : "text-muted-foreground"}`}
+            >
+              {v.label}
+            </Button>
+          ))}
+        </div>
         <div className="relative mt-2 w-full lg:ml-auto lg:mt-0 lg:w-64">
           <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-          <Input aria-label="Search papers" placeholder="Search papers" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input
+            aria-label="Search papers"
+            placeholder="Search papers"
+            className="pl-9"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 xl:hidden">
         {filtered.map((p) => {
-          const s = stats(p); const prog = paperProgress(p, s.total, s.total - s.open);
-          return <article key={p.id} className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-3.5 shadow-sm min-[380px]:p-4">
-            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${p.file_type === "excel" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{p.file_type === "excel" ? <FileSpreadsheet className="h-5 w-5" /> : <FileText className="h-5 w-5" />}</span><div className="min-w-0"><Link to="/papers/$paperId" params={{ paperId: p.id }} className="flex min-w-0 items-start gap-1 font-semibold leading-snug text-foreground"><span className="min-w-0 break-all min-[380px]:break-words">{p.title}</span><ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /></Link><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground min-[380px]:text-[11px]">{p.paper_code} · {new Date(p.created_at).toLocaleDateString()}</p><span className={`mt-2 inline-flex max-w-full rounded-full px-2 py-1 text-[10px] font-semibold ${statusTone(p.status)}`}>{STATUS_LABEL[p.status]}</span></div></div>
-            <div className="mt-4 grid grid-cols-1 gap-3 text-xs min-[380px]:grid-cols-2"><div className="min-w-0"><p className="text-muted-foreground">Exam / subject</p><p className="mt-1 break-words font-medium">{[p.exam_name, p.subject].filter(Boolean).join(" · ") || "—"}</p></div><div className="min-w-0"><p className="text-muted-foreground">Dr</p><p className="mt-1 break-words font-medium">{nameOf(p.reviewer_id)}</p></div></div>
-            <div className="mt-4 min-w-0 border-t border-border/70 pt-3"><div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-1 text-xs"><span className={`min-w-0 break-words ${s.open ? "font-medium text-destructive" : "text-muted-foreground"}`}>{s.open ? `${s.open} unresolved` : `${s.total} comments`}</span><span className="shrink-0 font-semibold">{prog}%</span></div><Progress value={prog} className="h-1.5 max-w-full" /></div>
-          </article>;
+          const s = stats(p);
+          const prog = paperProgress(p, s.total, s.total - s.open);
+          return (
+            <article
+              key={p.id}
+              className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-3.5 shadow-sm min-[380px]:p-4"
+            >
+              <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                <span
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${p.file_type === "excel" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}
+                >
+                  {p.file_type === "excel" ? (
+                    <FileSpreadsheet className="h-5 w-5" />
+                  ) : (
+                    <FileText className="h-5 w-5" />
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <Link
+                    to="/papers/$paperId"
+                    params={{ paperId: p.id }}
+                    className="flex min-w-0 items-start gap-1 font-semibold leading-snug text-foreground"
+                  >
+                    <span className="min-w-0 break-all min-[380px]:break-words">{p.title}</span>
+                    <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  </Link>
+                  <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground min-[380px]:text-[11px]">
+                    {p.paper_code} · {new Date(p.created_at).toLocaleDateString()}
+                  </p>
+                  <span
+                    className={`mt-2 inline-flex max-w-full rounded-full px-2 py-1 text-[10px] font-semibold ${statusTone(p.status)}`}
+                  >
+                    {STATUS_LABEL[p.status]}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 text-xs min-[380px]:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="text-muted-foreground">Exam / subject</p>
+                  <p className="mt-1 break-words font-medium">
+                    {[p.exam_name, p.subject].filter(Boolean).join(" · ") || "—"}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-muted-foreground">Dr</p>
+                  <p className="mt-1 break-words font-medium">{doctorOf(p.doctor_id)}</p>
+                </div>
+              </div>
+              <div className="mt-4 min-w-0 border-t border-border/70 pt-3">
+                <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-1 text-xs">
+                  <span
+                    className={`min-w-0 break-words ${s.open ? "font-medium text-destructive" : "text-muted-foreground"}`}
+                  >
+                    {s.open ? `${s.open} unresolved` : `${s.total} comments`}
+                  </span>
+                  <span className="shrink-0 font-semibold">{prog}%</span>
+                </div>
+                <Progress value={prog} className="h-1.5 max-w-full" />
+              </div>
+            </article>
+          );
         })}
-        {filtered.length === 0 && <div className="rounded-2xl border border-dashed bg-card/60 px-4 py-12 text-center text-sm text-muted-foreground">{papersLoading ? "Loading papers…" : q ? "No matching papers" : "No papers here yet"}</div>}
+        {filtered.length === 0 && (
+          <div className="rounded-2xl border border-dashed bg-card/60 px-4 py-12 text-center text-sm text-muted-foreground">
+            {papersLoading ? "Loading papers…" : q ? "No matching papers" : "No papers here yet"}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 hidden overflow-hidden rounded-2xl border border-border/70 bg-card/85 shadow-sm xl:block">
@@ -157,11 +295,23 @@ function Dashboard() {
               const s = stats(p);
               const prog = paperProgress(p, s.total, s.total - s.open);
               return (
-                <tr key={p.id} className="border-b border-border/60 last:border-0 hover:bg-accent/25">
+                <tr
+                  key={p.id}
+                  className="border-b border-border/60 last:border-0 hover:bg-accent/25"
+                >
                   <td className="px-4 py-3">
-                    <Link to="/papers/$paperId" params={{ paperId: p.id }} className="flex items-center gap-2 font-medium text-primary hover:underline">
-                      {p.file_type === "excel" ? <FileSpreadsheet className="h-4 w-4 text-success" /> : <FileText className="h-4 w-4 text-destructive" />}
-                      {p.title}<ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <Link
+                      to="/papers/$paperId"
+                      params={{ paperId: p.id }}
+                      className="flex items-center gap-2 font-medium text-primary hover:underline"
+                    >
+                      {p.file_type === "excel" ? (
+                        <FileSpreadsheet className="h-4 w-4 text-success" />
+                      ) : (
+                        <FileText className="h-4 w-4 text-destructive" />
+                      )}
+                      {p.title}
+                      <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground" />
                     </Link>
                     <div className="ml-6 font-mono text-xs text-muted-foreground">
                       {p.paper_code} · {new Date(p.created_at).toLocaleDateString()}
@@ -173,9 +323,13 @@ function Dashboard() {
                     <div className="text-xs">{p.subject}</div>
                   </td>
                   <td className="px-4 py-3">{nameOf(p.uploader_id)}</td>
-                  <td className="px-4 py-3">{nameOf(p.reviewer_id)}</td>
+                  <td className="px-4 py-3">{doctorOf(p.doctor_id)}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTone(p.status)}`}>{STATUS_LABEL[p.status]}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTone(p.status)}`}
+                    >
+                      {STATUS_LABEL[p.status]}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-xs">
                     {s.total} comments
@@ -193,7 +347,28 @@ function Dashboard() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                  {papersLoading ? "Loading papers…" : papersError ? <div className="space-y-3"><p>Could not load your papers.</p><Button variant="outline" size="sm" onClick={() => void refetch()}>Try again</Button></div> : <div className="flex flex-col items-center gap-3"><FileText className="h-7 w-7 text-muted-foreground" /><p className="font-medium text-foreground">{q ? "No matching papers" : "No papers here yet"}</p>{q && <Button variant="ghost" size="sm" onClick={() => setQ("")}>Clear search</Button>}</div>}
+                  {papersLoading ? (
+                    "Loading papers…"
+                  ) : papersError ? (
+                    <div className="space-y-3">
+                      <p>Could not load your papers.</p>
+                      <Button variant="outline" size="sm" onClick={() => void refetch()}>
+                        Try again
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <FileText className="h-7 w-7 text-muted-foreground" />
+                      <p className="font-medium text-foreground">
+                        {q ? "No matching papers" : "No papers here yet"}
+                      </p>
+                      {q && (
+                        <Button variant="ghost" size="sm" onClick={() => setQ("")}>
+                          Clear search
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </td>
               </tr>
             )}
