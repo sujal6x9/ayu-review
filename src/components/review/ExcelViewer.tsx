@@ -111,7 +111,7 @@ export function ExcelViewer(p: Props) {
                       id={`cell-${sheetName}-${ref}`}
                       onClick={() => {
                         setSel(ref);
-                        if (p.pen) { p.onPen({ type: "cell", sheet: sheetName, cell: ref, row: ri, col: ci }); return; }
+                        if (p.pen) { p.onPen({ type: "cell", sheet: sheetName, cell: ref, row: ri, col: ci, tool: "pen" }); return; }
                         if (cs?.[0]) p.onFocus(cs[0].id);
                       }}
                       onDoubleClick={() => { if (!p.pen) p.onCreate({ type: "cell", sheet: sheetName, cell: ref, row: ri, col: ci }); }}

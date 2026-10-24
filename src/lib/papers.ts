@@ -7,8 +7,8 @@ export type Activity = Database["public"]["Tables"]["activity"]["Row"];
 export type PaperStatus = Database["public"]["Enums"]["paper_status"];
 export type MarkStatus = Database["public"]["Enums"]["mark_status"];
 
-export type PdfAnchor = { type: "pdf"; page: number; x: number; y: number; w: number; h: number; points?: { x: number; y: number }[] };
-export type CellAnchor = { type: "cell"; sheet: string; cell: string; row: number; col: number };
+export type PdfAnchor = { type: "pdf"; page: number; x: number; y: number; w: number; h: number; points?: { x: number; y: number }[]; tool?: "pen" };
+export type CellAnchor = { type: "cell"; sheet: string; cell: string; row: number; col: number; tool?: "pen" };
 export type Anchor = PdfAnchor | CellAnchor | { type: "general" };
 
 export const STATUS_LABEL: Record<PaperStatus, string> = {

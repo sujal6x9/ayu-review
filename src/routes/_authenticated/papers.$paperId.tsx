@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Download, MousePointer2, Search, SquareDashedMousePointer, ZoomIn, ZoomOut, MessageSquarePlus, FileText, MessagesSquare, ChartNoAxesColumn, PenLine, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, MousePointer2, Search, SquareDashedMousePointer, ZoomIn, ZoomOut, MessageSquarePlus, FileText, MessagesSquare, ChartNoAxesColumn, PenLine, Loader2, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe, useProfiles } from "@/lib/auth";
 import {
@@ -143,6 +143,24 @@ function Workspace() {
 
   const threads = comments.filter((c) => !c.parent_id);
   const focusThread = threads.find((t) => t.id === focusId) ?? null;
+  const latestOwnPen = [...threads].reverse().find((comment) => {
+    if (comment.author_id !== me?.id) return false;
+    const anchor = comment.anchor as Anchor;
+    return anchor.type !== "general" && (anchor.tool === "pen" || (anchor.type === "pdf" && !!anchor.points) || comment.body === "Pen mark");
+  });
+
+  const undoPenMark = async () => {
+    if (!latestOwnPen || savingMarks > 0) return;
+    qc.setQueryData<Comment[]>(["comments", paperId], (current = []) => current.filter((comment) => comment.id !== latestOwnPen.id));
+    const { data, error } = await supabase.from("comments").delete().eq("id", latestOwnPen.id).eq("author_id", me?.id ?? "").select("id");
+    if (error || !data.length) {
+      qc.setQueryData<Comment[]>(["comments", paperId], (current = []) => current.some((comment) => comment.id === latestOwnPen.id) ? current : [...current, latestOwnPen]);
+      toast.error(error?.message || "The last pen stroke could not be undone.");
+      return;
+    }
+    refresh();
+    toast.success("Last pen stroke removed");
+  };
 
   const focus = useCallback(
     (id: string) => {
@@ -260,8 +278,8 @@ function Workspace() {
         {/* Center */}
         <section className={`${mobilePanel === "document" ? "flex" : "hidden"} h-[calc(100svh-17rem)] min-h-[28rem] min-w-0 flex-1 flex-col bg-canvas lg:flex lg:h-auto lg:min-h-0`}>
           <div className="flex shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b bg-card/95 px-2 py-2 [scrollbar-width:none] sm:px-3 [&::-webkit-scrollbar]:hidden">
-            <Button size="sm" variant={tool === "pen" ? "default" : "outline"} aria-pressed={tool === "pen"} onClick={() => setTool(tool === "pen" ? "select" : "pen")}><PenLine className="h-4 w-4" />Mark pen</Button>
-            {tool === "pen" && <Select value={penMark} onValueChange={(value) => setPenMark(value as MarkStatus)}><SelectTrigger aria-label="Pen mark status" className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger><SelectContent>{(["incorrect", "correct", "needs_improvement", "corrected", "approved"] as MarkStatus[]).map((mark) => <SelectItem key={mark} value={mark}><span className={`mr-2 inline-block h-2 w-2 rounded-full ${MARK_TONE[mark].bg}`} />{MARK_LABEL[mark]}</SelectItem>)}</SelectContent></Select>}
+            <Button size="sm" variant={tool === "pen" ? "default" : "outline"} aria-pressed={tool === "pen"} onClick={() => setTool(tool === "pen" ? "select" : "pen")}><PenLine className="h-4 w-4" />Pen</Button>
+            {tool === "pen" && <><Select value={penMark} onValueChange={(value) => setPenMark(value as MarkStatus)}><SelectTrigger aria-label="Pen color" className="h-9 w-40 text-xs"><SelectValue /></SelectTrigger><SelectContent>{(["incorrect", "correct", "needs_improvement", "corrected", "approved"] as MarkStatus[]).map((mark) => <SelectItem key={mark} value={mark}><span className={`mr-2 inline-block h-2 w-2 rounded-full ${MARK_TONE[mark].bg}`} />{MARK_LABEL[mark]}</SelectItem>)}</SelectContent></Select><Button size="sm" variant="outline" disabled={!latestOwnPen || savingMarks > 0} onClick={undoPenMark} title="Remove your latest pen stroke"><Undo2 className="h-4 w-4" />Undo</Button><span className="shrink-0 text-[11px] font-medium text-success">Shared live</span></>}
             {savingMarks > 0 && <Loader2 aria-label="Saving mark" className="h-4 w-4 animate-spin text-muted-foreground" />}
             {paper.file_type === "pdf" ? (
               <>

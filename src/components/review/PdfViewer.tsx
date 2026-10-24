@@ -20,6 +20,20 @@ type Props = {
   onPages: (n: number) => void;
 };
 
+function strokePath(points: { x: number; y: number }[]) {
+  if (!points.length) return "";
+  const scaled = points.map((point) => ({ x: point.x * 1000, y: point.y * 1000 }));
+  if (scaled.length === 1) return `M ${scaled[0]?.x} ${scaled[0]?.y} l 0.01 0`;
+  if (scaled.length === 2) return `M ${scaled[0]?.x} ${scaled[0]?.y} L ${scaled[1]?.x} ${scaled[1]?.y}`;
+  let path = `M ${scaled[0]?.x} ${scaled[0]?.y}`;
+  for (let index = 1; index < scaled.length - 1; index += 1) {
+    const point = scaled[index]; const next = scaled[index + 1];
+    if (point && next) path += ` Q ${point.x} ${point.y} ${(point.x + next.x) / 2} ${(point.y + next.y) / 2}`;
+  }
+  const last = scaled[scaled.length - 1];
+  return last ? `${path} L ${last.x} ${last.y}` : path;
+}
+
 export function PdfViewer(props: Props) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -163,7 +177,7 @@ function PdfPage({
             const points = [...stroke.current, frac(e)];
             stroke.current = [];
             setStrokePreview([]);
-            onPen({ type: "pdf", page: pageNumber, ...penBounds(points), points });
+            onPen({ type: "pdf", page: pageNumber, ...penBounds(points), points, tool: "pen" });
             return;
           }
           if (!draft) return;
@@ -184,9 +198,9 @@ function PdfPage({
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
           {mine.map((t) => {
             const a = t.anchor as PdfAnchor;
-            return a.points ? <polyline key={t.id} points={a.points.map((p) => `${p.x * 1000},${p.y * 1000}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className={`${MARK_TONE[t.mark].text} ${t.status === "resolved" ? "opacity-40" : ""}`} /> : null;
+            return a.points ? <path key={t.id} d={strokePath(a.points)} fill="none" stroke="currentColor" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className={`${MARK_TONE[t.mark].text} ${t.status === "resolved" ? "opacity-40" : ""}`} /> : null;
           })}
-          {strokePreview.length > 0 && <polyline points={strokePreview.map((p) => `${p.x * 1000},${p.y * 1000}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className={MARK_TONE[penMark].text} />}
+          {strokePreview.length > 0 && <path d={strokePath(strokePreview)} fill="none" stroke="currentColor" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className={MARK_TONE[penMark].text} />}
         </svg>
         {mine.map((t, i) => {
           const a = t.anchor as PdfAnchor;
