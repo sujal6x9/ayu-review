@@ -12,9 +12,9 @@ import { Progress } from "@/components/ui/progress";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Question Paper Review Hub" },
+      { title: "Dashboard — Ayu Review" },
       { name: "description", content: "All your uploaded and assigned question papers." },
-      { property: "og:title", content: "Dashboard — Question Paper Review Hub" },
+      { property: "og:title", content: "Dashboard — Ayu Review" },
       { property: "og:description", content: "Track review progress for every paper." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

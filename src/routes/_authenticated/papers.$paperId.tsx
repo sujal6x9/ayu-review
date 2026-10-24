@@ -32,9 +32,9 @@ const ExcelViewer = lazy(() => import("@/components/review/ExcelViewer").then((m
 export const Route = createFileRoute("/_authenticated/papers/$paperId")({
   head: () => ({
     meta: [
-      { title: "Review paper — Question Paper Review Hub" },
+      { title: "Review paper — Ayu Review" },
       { name: "description", content: "Review, comment on and approve a question paper." },
-      { property: "og:title", content: "Review paper — Question Paper Review Hub" },
+      { property: "og:title", content: "Review paper — Ayu Review" },
       { property: "og:description", content: "Collaborative question paper review workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

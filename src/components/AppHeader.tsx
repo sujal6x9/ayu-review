@@ -24,7 +24,7 @@ export function AppHeader() {
       <div className="mx-auto grid w-full max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-4 py-3 sm:flex sm:px-6 lg:px-8">
         <Link to={adminArea ? "/admin" : "/dashboard"} className="flex min-w-0 items-center gap-3 text-primary">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">{adminArea ? <ShieldCheck className="h-5 w-5" /> : <FileCheck2 className="h-5 w-5" />}</span>
-          <span className="min-w-0"><span className="block truncate font-display text-base font-semibold sm:text-lg">Review Hub</span><span className="hidden text-[11px] text-muted-foreground sm:block">{adminArea ? "Administration" : "Question paper workspace"}</span></span>
+          <span className="min-w-0"><span className="block truncate font-display text-base font-semibold sm:text-lg">Ayu Review</span><span className="hidden text-[11px] text-muted-foreground sm:block">{adminArea ? "Administration" : "Question paper workspace"}</span></span>
         </Link>
         <div className="flex shrink-0 items-center gap-3 sm:order-last sm:ml-auto">
           {me && <div className="hidden max-w-44 min-w-0 border-l pl-4 text-right leading-tight md:block"><div className="truncate text-sm font-medium">{me.name}</div><div className="mt-1 text-xs capitalize text-muted-foreground">{me.roles.map((r) => r === "uploader" ? "Paper creator" : r).join(", ")}</div></div>}

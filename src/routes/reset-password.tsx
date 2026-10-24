@@ -2,9 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [
-    { title: "Password assistance — Question Paper Review Hub" },
+    { title: "Password assistance — Ayu Review" },
     { name: "description", content: "Contact your administrator for password assistance." },
-    { property: "og:title", content: "Password assistance — Question Paper Review Hub" },
+    { property: "og:title", content: "Password assistance — Ayu Review" },
     { property: "og:description", content: "Administrator-managed password assistance." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),

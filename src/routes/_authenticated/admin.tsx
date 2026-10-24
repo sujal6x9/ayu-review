@@ -14,9 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 const accountOptions = { queryKey: ["admin-accounts"], queryFn: () => listAccounts() };
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [
-    { title: "Admin panel — Question Paper Review Hub" },
+    { title: "Admin panel — Ayu Review" },
     { name: "description", content: "Manage reviewer and paper creator accounts and passwords." },
-    { property: "og:title", content: "Admin panel — Question Paper Review Hub" },
+    { property: "og:title", content: "Admin panel — Ayu Review" },
     { property: "og:description", content: "Administrator account management for the review team." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),

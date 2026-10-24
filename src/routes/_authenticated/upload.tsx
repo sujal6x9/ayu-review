@@ -14,9 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/upload")({
   head: () => ({
     meta: [
-      { title: "Upload paper — Question Paper Review Hub" },
+      { title: "Upload paper — Ayu Review" },
       { name: "description", content: "Upload a PDF or Excel question paper and assign a reviewer." },
-      { property: "og:title", content: "Upload paper — Question Paper Review Hub" },
+      { property: "og:title", content: "Upload paper — Ayu Review" },
       { property: "og:description", content: "Upload a question paper for review." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

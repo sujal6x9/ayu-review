@@ -39,7 +39,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
   const Icon = admin ? ShieldCheck : FileCheck2;
   return <main className="relative min-h-svh overflow-hidden bg-background">
     <header className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-8 lg:px-12">
-      <Link to="/" className="flex min-w-0 items-center gap-3 text-primary"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20"><FileCheck2 className="h-5 w-5" /></span><span className="truncate font-display font-semibold">Review Hub<span className="ml-3 hidden border-l border-border pl-3 font-sans text-sm font-normal text-muted-foreground sm:inline">प्रश्नपत्र समीक्षा</span></span></Link>
+      <Link to="/" className="flex min-w-0 items-center gap-3 text-primary"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20"><FileCheck2 className="h-5 w-5" /></span><span className="truncate font-display font-semibold">Ayu Review<span className="ml-3 hidden border-l border-border pl-3 font-sans text-sm font-normal text-muted-foreground sm:inline">Paper review workspace</span></span></Link>
       <Button asChild variant="ghost" size="sm" className="shrink-0 text-muted-foreground"><Link to={admin ? "/auth" : "/admin-login"}>{admin ? "User sign in" : "Admin"}<ArrowUpRight className="h-3.5 w-3.5" /></Link></Button>
     </header>
     <div className="relative z-10 mx-auto grid min-h-[calc(100svh-72px)] max-w-7xl items-center gap-10 px-4 pb-8 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:px-12">
