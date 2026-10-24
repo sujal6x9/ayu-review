@@ -30,7 +30,9 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env['SUPABASE_URL'];
+  // The URL is public, so the build-time VITE value is a safe fallback on
+  // hosts where only browser-facing Supabase variables were configured.
+  const SUPABASE_URL = process.env['SUPABASE_URL'] || import.meta.env['VITE_SUPABASE_URL'];
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
