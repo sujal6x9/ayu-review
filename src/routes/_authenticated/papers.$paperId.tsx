@@ -119,7 +119,9 @@ function Workspace() {
   const [focusId, setFocusId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [tool, setTool] = useState<"select" | "area" | "pen">("select");
-  const [penMark, setPenMark] = useState<MarkStatus>("incorrect");
+  const penMark: MarkStatus = "incorrect";
+  const [penColor, setPenColor] = useState("#dc2626");
+  const [penWidth, setPenWidth] = useState(2.5);
   const [savingMarks, setSavingMarks] = useState(0);
   const [pages, setPages] = useState(0);
   const [sheets, setSheets] = useState<string[]>([]);
@@ -279,7 +281,7 @@ function Workspace() {
         <section className={`${mobilePanel === "document" ? "flex" : "hidden"} h-[calc(100svh-17rem)] min-h-[28rem] min-w-0 flex-1 flex-col bg-canvas lg:flex lg:h-auto lg:min-h-0`}>
           <div className="flex shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b bg-card/95 px-2 py-2 [scrollbar-width:none] sm:px-3 [&::-webkit-scrollbar]:hidden">
             <Button size="sm" variant={tool === "pen" ? "default" : "outline"} aria-pressed={tool === "pen"} onClick={() => setTool(tool === "pen" ? "select" : "pen")}><PenLine className="h-4 w-4" />Pen</Button>
-            {tool === "pen" && <><Select value={penMark} onValueChange={(value) => setPenMark(value as MarkStatus)}><SelectTrigger aria-label="Pen color" className="h-9 w-40 text-xs"><SelectValue /></SelectTrigger><SelectContent>{(["incorrect", "correct", "needs_improvement", "corrected", "approved"] as MarkStatus[]).map((mark) => <SelectItem key={mark} value={mark}><span className={`mr-2 inline-block h-2 w-2 rounded-full ${MARK_TONE[mark].bg}`} />{MARK_LABEL[mark]}</SelectItem>)}</SelectContent></Select><Button size="sm" variant="outline" disabled={!latestOwnPen || savingMarks > 0} onClick={undoPenMark} title="Remove your latest pen stroke"><Undo2 className="h-4 w-4" />Undo</Button><span className="shrink-0 text-[11px] font-medium text-success">Shared live</span></>}
+            {tool === "pen" && <><label className="flex h-9 shrink-0 items-center gap-2 rounded-md border bg-background px-2 text-xs font-medium">Ink<input type="color" aria-label="Pen ink color" value={penColor} onChange={(event) => setPenColor(event.target.value)} className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0" /></label><Select value={String(penWidth)} onValueChange={(value) => setPenWidth(Number(value))}><SelectTrigger aria-label="Pen thickness" className="h-9 w-24 text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1.5">Fine</SelectItem><SelectItem value="2.5">Normal</SelectItem><SelectItem value="4">Thick</SelectItem></SelectContent></Select><Button size="sm" variant="outline" disabled={!latestOwnPen || savingMarks > 0} onClick={undoPenMark} title="Remove your latest pen stroke"><Undo2 className="h-4 w-4" />Undo</Button><span className="shrink-0 text-[11px] font-medium text-success">Shared live</span></>}
             {savingMarks > 0 && <Loader2 aria-label="Saving mark" className="h-4 w-4 animate-spin text-muted-foreground" />}
             {paper.file_type === "pdf" ? (
               <>
@@ -321,7 +323,8 @@ function Workspace() {
                 zoom={zoom}
                 marking={tool === "area"}
                 pen={tool === "pen"}
-                penMark={penMark}
+                penColor={penColor}
+                penWidth={penWidth}
                 onPen={savePenMark}
                 threads={threads.filter((t) => (t.anchor as Anchor).type === "pdf")}
                 pending={pending?.type === "pdf" ? pending : null}
@@ -334,6 +337,8 @@ function Workspace() {
               <ExcelViewer
                 data={fileData}
                 pen={tool === "pen"}
+                penColor={penColor}
+                penWidth={penWidth}
                 onPen={savePenMark}
                 threads={threads.filter((t) => (t.anchor as Anchor).type === "cell")}
                 pending={pending?.type === "cell" ? pending : null}

@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquarePlus } from "lucide-react";
 import * as XLSX from "xlsx";
 import { MARK_TONE, colLetter, type CellAnchor, type Comment } from "@/lib/papers";
+import { penBounds, strokePath, type PenPoint } from "@/lib/review-tools";
 
 type Props = {
   data: ArrayBuffer;
   pen: boolean;
+  penColor: string;
+  penWidth: number;
   onPen: (a: CellAnchor) => void;
   threads: Comment[];
   pending: CellAnchor | null;
@@ -56,7 +59,7 @@ export function ExcelViewer(p: Props) {
     const m = new Map<string, Comment[]>();
     for (const t of p.threads) {
       const a = t.anchor as CellAnchor;
-      if (a.sheet !== sheetName) continue;
+      if (a.sheet !== sheetName || a.points?.length) continue;
       const list = m.get(a.cell) ?? [];
       list.push(t);
       m.set(a.cell, list);
@@ -65,6 +68,25 @@ export function ExcelViewer(p: Props) {
   }, [p.threads, sheetName]);
 
   const [sel, setSel] = useState<string | null>(null);
+  const inkLayer = useRef<SVGSVGElement>(null);
+  const stroke = useRef<PenPoint[]>([]);
+  const strokeCell = useRef<{ cell: string; row: number; col: number } | null>(null);
+  const [strokePreview, setStrokePreview] = useState<PenPoint[]>([]);
+
+  function inkPoint(e: React.PointerEvent) {
+    const bounds = inkLayer.current?.getBoundingClientRect();
+    if (!bounds) return { x: 0, y: 0 };
+    return {
+      x: Math.min(1, Math.max(0, (e.clientX - bounds.left) / bounds.width)),
+      y: Math.min(1, Math.max(0, (e.clientY - bounds.top) / bounds.height)),
+    };
+  }
+
+  function cellAtPoint(x: number, y: number) {
+    const cell = document.elementsFromPoint(x, y).find((element) => element instanceof HTMLElement && element.dataset.cell) as HTMLElement | undefined;
+    if (!cell?.dataset.cell || cell.dataset.row === undefined || cell.dataset.col === undefined) return null;
+    return { cell: cell.dataset.cell, row: Number(cell.dataset.row), col: Number(cell.dataset.col) };
+  }
   const commentOnSelection = () => {
     if (!sel) return;
     const match = sel.match(/^([A-Z]+)(\d+)$/);
@@ -81,7 +103,8 @@ export function ExcelViewer(p: Props) {
     <div className="flex h-full min-h-0 min-w-0 flex-col">
       {sel && <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-background px-3 py-2"><span className="truncate text-xs text-muted-foreground">{sheetName} · {sel}</span><Button size="sm" onClick={commentOnSelection}><MessageSquarePlus className="h-4 w-4" /><span className="hidden sm:inline">Comment on</span> {sel}</Button></div>}
       <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-        <table className="border-collapse font-sans text-xs">
+        <div className="relative w-max min-w-full">
+        <table className="w-full border-collapse font-sans text-xs">
           <thead className="sticky top-0 z-10">
             <tr>
               <th className="sticky left-0 z-20 w-10 border bg-muted" />
@@ -109,9 +132,12 @@ export function ExcelViewer(p: Props) {
                     <td
                       key={ci}
                       id={`cell-${sheetName}-${ref}`}
+                      data-cell={ref}
+                      data-row={ri}
+                      data-col={ci}
                       onClick={() => {
                         setSel(ref);
-                        if (p.pen) { p.onPen({ type: "cell", sheet: sheetName, cell: ref, row: ri, col: ci, tool: "pen" }); return; }
+                        if (p.pen) return;
                         if (cs?.[0]) p.onFocus(cs[0].id);
                       }}
                       onDoubleClick={() => { if (!p.pen) p.onCreate({ type: "cell", sheet: sheetName, cell: ref, row: ri, col: ci }); }}
@@ -126,6 +152,46 @@ export function ExcelViewer(p: Props) {
             ))}
           </tbody>
         </table>
+        <svg
+          ref={inkLayer}
+          aria-label="Spreadsheet ink surface"
+          className={`absolute inset-0 h-full w-full ${p.pen ? "cursor-crosshair touch-none" : "pointer-events-none"}`}
+          viewBox="0 0 1000 1000"
+          preserveAspectRatio="none"
+          onPointerDown={(e) => {
+            if (!p.pen) return;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            strokeCell.current = cellAtPoint(e.clientX, e.clientY);
+            stroke.current = [inkPoint(e)];
+            setStrokePreview(stroke.current);
+          }}
+          onPointerMove={(e) => {
+            if (!p.pen || !stroke.current.length) return;
+            const point = inkPoint(e);
+            const last = stroke.current[stroke.current.length - 1];
+            if (last && Math.hypot(point.x - last.x, point.y - last.y) < 0.002) return;
+            stroke.current = [...stroke.current, point];
+            setStrokePreview(stroke.current);
+          }}
+          onPointerCancel={() => { stroke.current = []; strokeCell.current = null; setStrokePreview([]); }}
+          onPointerUp={(e) => {
+            if (!p.pen || !stroke.current.length) return;
+            const points = [...stroke.current, inkPoint(e)];
+            const origin = strokeCell.current ?? { cell: "A1", row: 0, col: 0 };
+            stroke.current = [];
+            strokeCell.current = null;
+            setStrokePreview([]);
+            p.onPen({ type: "cell", sheet: sheetName, ...origin, ...penBounds(points), points, tool: "pen", color: p.penColor, width: p.penWidth });
+          }}
+        >
+          {p.threads.map((comment) => {
+            const anchor = comment.anchor as CellAnchor;
+            if (anchor.sheet !== sheetName || !anchor.points?.length) return null;
+            return <path key={comment.id} d={strokePath(anchor.points)} fill="none" stroke={anchor.color ?? "currentColor"} strokeWidth={anchor.width ?? 2.5} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className={`${anchor.color ? "" : MARK_TONE[comment.mark].text} ${comment.status === "resolved" ? "opacity-40" : ""}`} />;
+          })}
+          {strokePreview.length > 0 && <path d={strokePath(strokePreview)} fill="none" stroke={p.penColor} strokeWidth={p.penWidth} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />}
+        </svg>
+        </div>
         {rows.length > MAX_ROWS && <div className="p-3 text-xs text-muted-foreground">Showing the first {MAX_ROWS} rows.</div>}
       </div>
       <div className="flex flex-wrap items-center gap-1 border-t bg-muted px-2 py-1">
