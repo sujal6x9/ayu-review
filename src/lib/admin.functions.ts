@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin, changeRoleSchema, createAccountSchema, editableAccountRole, resetAccountSchema, usernameEmail } from "@/lib/accounts";
+import { assertAdmin, changeRoleSchema, createAccountSchema, editableAccountRole, resetAccountSchema } from "@/lib/accounts";
 
 export const listAccounts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -9,7 +9,7 @@ export const listAccounts = createServerFn({ method: "POST" })
     if (error) throw new Error("Unable to check account permissions.");
     assertAdmin(allowed);
     const [{ data: profiles, error: pError }, { data: roles, error: rError }] = await Promise.all([
-      context.supabase.from("profiles").select("id, username, full_name, created_at").order("created_at", { ascending: false }),
+      context.supabase.from("profiles").select("id, email, full_name, created_at").order("created_at", { ascending: false }),
       context.supabase.from("user_roles").select("user_id, role"),
     ]);
     if (pError || rError) throw new Error("Unable to load accounts.");
@@ -25,21 +25,21 @@ export const createAccount = createServerFn({ method: "POST" })
     assertAdmin(allowed);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: usernameEmail(data.username), password: data.password, email_confirm: true,
-      user_metadata: { full_name: data.fullName }, app_metadata: { managed_account: true, username: data.username },
+      email: data.email, password: data.password, email_confirm: true,
+      user_metadata: { full_name: data.fullName }, app_metadata: { managed_account: true },
     });
     if (createError) throw new Error(createError.message);
     const user = created.user;
     if (!user) throw new Error("The account could not be created.");
     const [{ error: profileError }, { error: roleError }] = await Promise.all([
-      supabaseAdmin.from("profiles").update({ username: data.username, full_name: data.fullName }).eq("id", user.id),
+      supabaseAdmin.from("profiles").update({ email: data.email, full_name: data.fullName }).eq("id", user.id),
       supabaseAdmin.from("user_roles").insert({ user_id: user.id, role: data.role }),
     ]);
     if (profileError || roleError) {
       await supabaseAdmin.auth.admin.deleteUser(user.id);
-      throw new Error("Unable to save the account; no account was retained. Try another username.");
+      throw new Error("Unable to save the account; no account was retained. Try another email address.");
     }
-    return { username: data.username };
+    return { email: data.email };
   });
 
 export const resetAccountPassword = createServerFn({ method: "POST" })

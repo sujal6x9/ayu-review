@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHome, assertAdmin, changeRoleSchema, createAccountSchema, editableAccountRole, usernameEmail } from "@/lib/accounts";
+import { accountEmailSchema, accountHome, assertAdmin, changeRoleSchema, createAccountSchema, editableAccountRole } from "@/lib/accounts";
 
 describe("Admin-controlled accounts", () => {
   it("allows changing a reviewer to paper creator and back", () => {
@@ -27,17 +27,17 @@ describe("Admin-controlled accounts", () => {
     expect(accountHome(["reviewer"])).toBe("/dashboard");
     expect(accountHome(["uploader"])).toBe("/dashboard");
   });
-  it("maps admin username deterministically without OTP", () => {
-    expect(usernameEmail(" Admin ")).toBe("admin@app.local");
+  it("normalizes account email addresses", () => {
+    expect(accountEmailSchema.parse(" Admin@Example.COM ")).toBe("admin@example.com");
   });
   it("allows administrator-created reviewer accounts", () => {
-    expect(createAccountSchema.parse({ username: "reviewer1", fullName: "Reviewer", password: "A-valid-test-password9!", role: "reviewer" }).role).toBe("reviewer");
+    expect(createAccountSchema.parse({ email: "reviewer@example.com", fullName: "Reviewer", password: "A-valid-test-password9!", role: "reviewer" }).role).toBe("reviewer");
   });
   it("allows administrator-created paper creators", () => {
-    expect(createAccountSchema.parse({ username: "creator1", fullName: "Creator", password: "A-valid-test-password9!", role: "uploader" }).role).toBe("uploader");
+    expect(createAccountSchema.parse({ email: "creator@example.com", fullName: "Creator", password: "A-valid-test-password9!", role: "uploader" }).role).toBe("uploader");
   });
   it("does not let user creation grant admin", () => {
-    expect(createAccountSchema.safeParse({ username: "user1", fullName: "User", password: "A-valid-test-password9!", role: "admin" }).success).toBe(false);
+    expect(createAccountSchema.safeParse({ email: "user@example.com", fullName: "User", password: "A-valid-test-password9!", role: "admin" }).success).toBe(false);
   });
   it("denies account management without a verified admin role", () => {
     expect(() => assertAdmin(false)).toThrow("Only administrators");

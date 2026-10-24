@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FileCheck2, ArrowRight, ShieldCheck, Eye, EyeOff, ArrowUpRight, LoaderCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { accountHome, usernameEmail } from "@/lib/accounts";
+import { accountEmailSchema, accountHome } from "@/lib/accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ async function homeForUser(userId: string) {
 export function SignInForm({ admin = false }: { admin?: boolean }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
@@ -28,8 +28,8 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
   async function signIn(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: usernameEmail(username), password });
-      if (error || !data.user) throw new Error("Username or password is incorrect.");
+      const { data, error } = await supabase.auth.signInWithPassword({ email: accountEmailSchema.parse(email), password });
+      if (error || !data.user) throw new Error("Email or password is incorrect.");
       const home = await homeForUser(data.user.id);
       setPassword("");
       await navigate({ to: home });
@@ -47,7 +47,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       <h1 className="font-display text-3xl font-semibold leading-tight text-foreground">{admin ? "Admin sign in" : "Welcome back."}</h1>
       <p className="mb-8 mt-2 text-sm text-muted-foreground">{admin ? "Sign in to your admin account." : "Sign in to your review workspace."}</p>
       <form onSubmit={signIn} className="space-y-5" aria-busy={busy}>
-        <div className="space-y-2"><Label htmlFor="username">Username</Label><Input id="username" className="h-11 bg-background shadow-none" placeholder="Enter your username" autoComplete="username" autoCapitalize="none" spellCheck={false} required value={username} onChange={(e) => setUsername(e.target.value)} /></div>
+        <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" className="h-11 bg-background shadow-none" placeholder="Enter your email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="space-y-2"><Label htmlFor="password">Password</Label><div className="relative"><Input id="password" className="h-11 bg-background pr-12 shadow-none" placeholder="Enter your password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /><Button type="button" variant="ghost" size="icon" className="absolute right-0.5 top-0.5 h-10 w-10 text-muted-foreground" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
         <Button className="h-11 w-full justify-between px-4 shadow-none" disabled={busy}>{busy ? "Signing in…" : "Sign in"}{busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}</Button>
       </form>

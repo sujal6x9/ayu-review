@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-export const usernameSchema = z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9._-]{2,31}$/, "Use 3–32 letters, numbers, dots, underscores or hyphens.");
-export function usernameEmail(username: string) {
-  return `${usernameSchema.parse(username)}@app.local`;
-}
+export const accountEmailSchema = z.string().trim().toLowerCase().email("Enter a valid email address.").max(254);
 export const createAccountSchema = z.object({
-  username: usernameSchema,
+  email: accountEmailSchema,
   fullName: z.string().trim().min(1).max(100),
   password: z.string().min(8).max(128),
   role: z.enum(["reviewer", "uploader"]),
