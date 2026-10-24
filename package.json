@@ -12,12 +12,16 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:live": "node scripts/live-smoke-test.mjs",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "android:sync": "cap sync android",
+    "android:build": "cd android && gradlew.bat assembleDebug"
   },
   "overrides": {
     "rolldown": "1.2.1"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/cloud-auth-js": "^1.2.0",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -76,6 +80,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.26.5",
     "@testing-library/jest-dom": "^6.6.0",

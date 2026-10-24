@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ayu Review</string>
+    <string name="title_activity_main">Ayu Review</string>
+    <string name="package_name">com.ayuscholar.review</string>
+    <string name="custom_url_scheme">com.ayuscholar.review</string>
+</resources>
