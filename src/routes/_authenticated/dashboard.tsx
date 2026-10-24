@@ -106,9 +106,9 @@ function Dashboard() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-5 min-[380px]:px-4 sm:px-6 sm:py-10">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:gap-4"><div className="min-w-0"><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary sm:mb-2 sm:text-xs">Your workspace</p><h1 className="font-display text-2xl font-semibold text-foreground min-[380px]:text-3xl sm:text-4xl">Question papers</h1><p className="mt-2 hidden text-sm text-muted-foreground sm:block">Track every review from upload to final approval.</p></div>{(me?.roles.includes("uploader") || isAdmin) && <Button asChild size="sm" className="shrink-0 sm:h-10 sm:px-4"><Link to="/upload"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload paper</span><span className="sm:hidden">Upload</span></Link></Button>}</div>
-      <div className="mt-5 grid grid-cols-2 gap-2 min-[380px]:gap-3 sm:mt-7 sm:grid-cols-3 xl:grid-cols-6">
+    <main className="mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-2.5 py-5 min-[320px]:px-3 min-[380px]:px-4 sm:px-6 sm:py-10">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 sm:gap-4"><div className="min-w-0"><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary sm:mb-2 sm:text-xs">Your workspace</p><h1 className="break-words font-display text-2xl font-semibold text-foreground min-[380px]:text-3xl sm:text-4xl">Question papers</h1><p className="mt-2 hidden text-sm text-muted-foreground sm:block">Track every review from upload to final approval.</p></div>{(me?.roles.includes("uploader") || isAdmin) && <Button asChild size="sm" className="shrink-0 sm:h-10 sm:px-4"><Link to="/upload"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload paper</span><span className="sm:hidden">Upload</span></Link></Button>}</div>
+      <div className="mt-5 grid grid-cols-1 gap-2 min-[280px]:grid-cols-2 min-[380px]:gap-3 sm:mt-7 sm:grid-cols-3 xl:grid-cols-6">
         {cards.map((c) => (
           <div key={c.label} className="min-w-0 rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm backdrop-blur min-[380px]:rounded-2xl sm:p-4">
             <div className="min-h-7 text-[10px] font-semibold uppercase leading-3.5 tracking-wide text-muted-foreground min-[380px]:text-[11px]">{c.label}</div>
@@ -117,11 +117,11 @@ function Dashboard() {
         ))}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border/70 bg-card/70 p-2 shadow-sm backdrop-blur sm:mt-8 sm:flex sm:items-center">
-        <div className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{views.map((v) => (
-          <Button variant={view === v.key ? "secondary" : "ghost"} key={v.key} onClick={() => setView(v.key)} className={`shrink-0 ${view === v.key ? "text-primary" : "text-muted-foreground"}`}>{v.label}</Button>
+      <div className="mt-6 min-w-0 rounded-2xl border border-border/70 bg-card/70 p-2 shadow-sm backdrop-blur sm:mt-8 lg:flex lg:items-center">
+        <div className="grid min-w-0 grid-cols-1 gap-1 min-[280px]:grid-cols-2 min-[520px]:grid-cols-4 lg:flex">{views.map((v) => (
+          <Button variant={view === v.key ? "secondary" : "ghost"} key={v.key} onClick={() => setView(v.key)} className={`min-w-0 whitespace-normal px-2 text-xs min-[380px]:text-sm lg:shrink-0 lg:px-4 ${view === v.key ? "text-primary" : "text-muted-foreground"}`}>{v.label}</Button>
         ))}</div>
-        <div className="relative mt-2 w-full sm:ml-auto sm:mt-0 sm:w-64">
+        <div className="relative mt-2 w-full lg:ml-auto lg:mt-0 lg:w-64">
           <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
           <Input aria-label="Search papers" placeholder="Search papers" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
@@ -131,9 +131,9 @@ function Dashboard() {
         {filtered.map((p) => {
           const s = stats(p); const prog = paperProgress(p, s.total, s.total - s.open);
           return <article key={p.id} className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-3.5 shadow-sm min-[380px]:p-4">
-            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${p.file_type === "excel" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{p.file_type === "excel" ? <FileSpreadsheet className="h-5 w-5" /> : <FileText className="h-5 w-5" />}</span><div className="min-w-0"><Link to="/papers/$paperId" params={{ paperId: p.id }} className="flex min-w-0 items-start gap-1 font-semibold leading-snug text-foreground"><span className="min-w-0 break-all min-[380px]:break-words">{p.title}</span><ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /></Link><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground min-[380px]:text-[11px]">{p.paper_code} · {new Date(p.created_at).toLocaleDateString()}</p></div><span className={`col-start-2 w-fit rounded-full px-2 py-1 text-[10px] font-semibold ${statusTone(p.status)}`}>{STATUS_LABEL[p.status]}</span></div>
+            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${p.file_type === "excel" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{p.file_type === "excel" ? <FileSpreadsheet className="h-5 w-5" /> : <FileText className="h-5 w-5" />}</span><div className="min-w-0"><Link to="/papers/$paperId" params={{ paperId: p.id }} className="flex min-w-0 items-start gap-1 font-semibold leading-snug text-foreground"><span className="min-w-0 break-all min-[380px]:break-words">{p.title}</span><ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /></Link><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground min-[380px]:text-[11px]">{p.paper_code} · {new Date(p.created_at).toLocaleDateString()}</p><span className={`mt-2 inline-flex max-w-full rounded-full px-2 py-1 text-[10px] font-semibold ${statusTone(p.status)}`}>{STATUS_LABEL[p.status]}</span></div></div>
             <div className="mt-4 grid grid-cols-1 gap-3 text-xs min-[380px]:grid-cols-2"><div className="min-w-0"><p className="text-muted-foreground">Exam / subject</p><p className="mt-1 break-words font-medium">{[p.exam_name, p.subject].filter(Boolean).join(" · ") || "—"}</p></div><div className="min-w-0"><p className="text-muted-foreground">Reviewer</p><p className="mt-1 break-words font-medium">{nameOf(p.reviewer_id)}</p></div></div>
-            <div className="mt-4 border-t border-border/70 pt-3"><div className="mb-2 flex items-center justify-between text-xs"><span className={s.open ? "font-medium text-destructive" : "text-muted-foreground"}>{s.open ? `${s.open} unresolved` : `${s.total} comments`}</span><span className="font-semibold">{prog}%</span></div><Progress value={prog} className="h-1.5" /></div>
+            <div className="mt-4 min-w-0 border-t border-border/70 pt-3"><div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-1 text-xs"><span className={`min-w-0 break-words ${s.open ? "font-medium text-destructive" : "text-muted-foreground"}`}>{s.open ? `${s.open} unresolved` : `${s.total} comments`}</span><span className="shrink-0 font-semibold">{prog}%</span></div><Progress value={prog} className="h-1.5 max-w-full" /></div>
           </article>;
         })}
         {filtered.length === 0 && <div className="rounded-2xl border border-dashed bg-card/60 px-4 py-12 text-center text-sm text-muted-foreground">{papersLoading ? "Loading papers…" : q ? "No matching papers" : "No papers here yet"}</div>}
