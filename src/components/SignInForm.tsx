@@ -1,6 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
 import {
   FileCheck2,
   ArrowRight,
@@ -15,6 +18,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { accountEmailSchema, accountHome } from "@/lib/accounts";
+import { NATIVE_GOOGLE_CALLBACK, parseOAuthCallback } from "@/lib/google-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,12 +26,17 @@ import { Label } from "@/components/ui/label";
 async function homeForUser(userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw new Error("Unable to load your account. Please try again.");
-  return accountHome((data ?? []).map((row) => row.role));
+  const roles = (data ?? []).map((row) => row.role);
+  if (roles.length === 0) {
+    throw new Error("This Google account does not have access yet. Contact your administrator.");
+  }
+  return accountHome(roles);
 }
 
 export function SignInForm({ admin = false }: { admin?: boolean }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +47,53 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
         if (data.session)
           await navigate({ to: await homeForUser(data.session.user.id), replace: true });
       })
-      .catch(() => {});
+      .catch(async (error) => {
+        await supabase.auth.signOut();
+        toast.error(error instanceof Error ? error.message : "Unable to open your account.");
+      });
+  }, [navigate]);
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let disposed = false;
+    let lastUrl = "";
+    const completeNativeSignIn = async (url: string) => {
+      if (!url || url === lastUrl) return;
+      const callback = parseOAuthCallback(url);
+      if (!callback) return;
+      lastUrl = url;
+      setGoogleBusy(true);
+      try {
+        await Browser.close();
+        if (callback.error) throw new Error(callback.error);
+        if (!callback.accessToken || !callback.refreshToken) {
+          throw new Error("Google did not return a valid session.");
+        }
+        const { data, error } = await supabase.auth.setSession({
+          access_token: callback.accessToken,
+          refresh_token: callback.refreshToken,
+        });
+        if (error || !data.user)
+          throw new Error(error?.message || "Unable to sign in with Google.");
+        await navigate({ to: await homeForUser(data.user.id), replace: true });
+      } catch (error) {
+        await supabase.auth.signOut();
+        toast.error(error instanceof Error ? error.message : "Unable to sign in with Google.");
+      } finally {
+        if (!disposed) setGoogleBusy(false);
+      }
+    };
+    let listener: Awaited<ReturnType<typeof App.addListener>> | undefined;
+    void App.addListener("appUrlOpen", ({ url }) => completeNativeSignIn(url)).then((handle) => {
+      if (disposed) void handle.remove();
+      else listener = handle;
+    });
+    void App.getLaunchUrl().then((launch) => {
+      if (launch?.url) void completeNativeSignIn(launch.url);
+    });
+    return () => {
+      disposed = true;
+      if (listener) void listener.remove();
+    };
   }, [navigate]);
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +111,27 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       toast.error(error instanceof Error ? error.message : "Unable to sign in.");
     } finally {
       setBusy(false);
+    }
+  }
+  async function signInWithGoogle() {
+    setGoogleBusy(true);
+    try {
+      const native = Capacitor.isNativePlatform();
+      const redirectTo = native
+        ? NATIVE_GOOGLE_CALLBACK
+        : `${window.location.origin}${admin ? "/admin-login" : "/auth"}`;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: native },
+      });
+      if (error) throw error;
+      if (native) {
+        if (!data.url) throw new Error("Google sign-in could not be opened.");
+        await Browser.open({ url: data.url, presentationStyle: "popover" });
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to start Google sign-in.");
+      setGoogleBusy(false);
     }
   }
   const Icon = admin ? ShieldCheck : FileCheck2;
@@ -128,6 +204,21 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
               : "Sign in to continue reviewing your papers."}
           </p>
           <form onSubmit={signIn} className="space-y-5" aria-busy={busy}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 w-full gap-3 bg-background"
+              disabled={busy || googleBusy}
+              onClick={signInWithGoogle}
+            >
+              {googleBusy ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <GoogleMark />}
+              {googleBusy ? "Opening Google…" : "Continue with Google"}
+            </Button>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or use email
+              <span className="h-px flex-1 bg-border" />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -167,7 +258,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
                 </Button>
               </div>
             </div>
-            <Button className="h-12 w-full justify-between px-5" disabled={busy}>
+            <Button className="h-12 w-full justify-between px-5" disabled={busy || googleBusy}>
               {busy ? "Signing in…" : "Sign in securely"}
               {busy ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -185,5 +276,28 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
         </section>
       </div>
     </main>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+      <path
+        fill="#4285F4"
+        d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4h5.4a4.7 4.7 0 0 1-2 3v2.6h3.3c1.9-1.8 2.9-4.4 2.9-7.4Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 22c2.7 0 5-.9 6.7-2.4L15.4 17c-.9.6-2.1 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3v2.7A10 10 0 0 0 12 22Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M6.4 13.9A6 6 0 0 1 6.1 12c0-.7.1-1.3.3-1.9V7.4H3A10 10 0 0 0 2 12c0 1.6.4 3.2 1 4.6l3.4-2.7Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 6c1.5 0 2.9.5 3.9 1.5l2.9-2.9A9.8 9.8 0 0 0 12 2a10 10 0 0 0-9 5.4l3.4 2.7A6 6 0 0 1 12 6Z"
+      />
+    </svg>
   );
 }
