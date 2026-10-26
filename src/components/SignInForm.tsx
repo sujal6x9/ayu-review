@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { accountEmailSchema, accountHome } from "@/lib/accounts";
 import { NATIVE_GOOGLE_CALLBACK, parseOAuthCallback } from "@/lib/google-auth";
+import { ensureGoogleCreatorAccount } from "@/lib/signup.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,8 +45,10 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
     void supabase.auth
       .getSession()
       .then(async ({ data }) => {
-        if (data.session)
+        if (data.session) {
+          await ensureGoogleCreatorAccount();
           await navigate({ to: await homeForUser(data.session.user.id), replace: true });
+        }
       })
       .catch(async (error) => {
         await supabase.auth.signOut();
@@ -74,6 +77,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
         });
         if (error || !data.user)
           throw new Error(error?.message || "Unable to sign in with Google.");
+        await ensureGoogleCreatorAccount();
         await navigate({ to: await homeForUser(data.user.id), replace: true });
       } catch (error) {
         await supabase.auth.signOut();
@@ -201,7 +205,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
           <p className="mb-8 mt-2 text-sm leading-6 text-muted-foreground">
             {admin
               ? "Manage your review team and account access."
-              : "Sign in to continue reviewing your papers."}
+              : "Sign in or create your paper-creator account with Google."}
           </p>
           <form onSubmit={signIn} className="space-y-5" aria-busy={busy}>
             <Button
@@ -214,6 +218,11 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
               {googleBusy ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <GoogleMark />}
               {googleBusy ? "Opening Google…" : "Continue with Google"}
             </Button>
+            {!admin && (
+              <p className="text-center text-xs leading-5 text-muted-foreground">
+                First time here? Any verified Gmail account creates your workspace automatically.
+              </p>
+            )}
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="h-px flex-1 bg-border" />
               or use email
