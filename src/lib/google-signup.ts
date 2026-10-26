@@ -1,5 +1,22 @@
 import { accountEmailSchema } from "@/lib/accounts";
 
+export type GoogleAccountFlow = "signup" | "signin";
+
+export function googleCreatorAction(flow: GoogleAccountFlow, roles: readonly string[]) {
+  if (roles.includes("admin")) {
+    throw new Error("Administrator accounts must use the separate admin sign-in page.");
+  }
+  if (flow === "signin") {
+    if (roles.includes("uploader")) return "signin" as const;
+    throw new Error("No paper-creator account was found. Sign up with Google first.");
+  }
+  if (roles.length === 0) return "create" as const;
+  if (roles.includes("uploader")) {
+    throw new Error("This paper-creator account already exists. Use Google sign in.");
+  }
+  throw new Error("This Google account cannot create a paper-creator account.");
+}
+
 type GoogleSignupIdentity = {
   email?: string | null | undefined;
   emailConfirmedAt?: string | null | undefined;

@@ -19,7 +19,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { accountEmailSchema, accountHome } from "@/lib/accounts";
 import { NATIVE_GOOGLE_CALLBACK, parseOAuthCallback } from "@/lib/google-auth";
-import { ensureGoogleCreatorAccount } from "@/lib/signup.functions";
+import type { GoogleAccountFlow } from "@/lib/google-signup";
+import { completeGoogleCreatorAccount } from "@/lib/signup.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,10 +35,22 @@ async function homeForUser(userId: string) {
   return accountHome(roles);
 }
 
+const GOOGLE_FLOW_KEY = "ayu-review-google-flow";
+
+function rememberGoogleFlow(flow: GoogleAccountFlow) {
+  window.localStorage.setItem(GOOGLE_FLOW_KEY, flow);
+}
+
+function takeGoogleFlow(): GoogleAccountFlow | null {
+  const flow = window.localStorage.getItem(GOOGLE_FLOW_KEY);
+  window.localStorage.removeItem(GOOGLE_FLOW_KEY);
+  return flow === "signup" || flow === "signin" ? flow : null;
+}
+
 export function SignInForm({ admin = false }: { admin?: boolean }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState<GoogleAccountFlow | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,15 +59,23 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       .getSession()
       .then(async ({ data }) => {
         if (data.session) {
-          await ensureGoogleCreatorAccount();
-          await navigate({ to: await homeForUser(data.session.user.id), replace: true });
+          const flow = takeGoogleFlow();
+          if (flow) await completeGoogleCreatorAccount({ data: flow });
+          const home = await homeForUser(data.session.user.id);
+          if (!admin && home === "/admin") {
+            throw new Error("Administrator accounts must use the separate admin sign-in page.");
+          }
+          if (admin && home !== "/admin") {
+            throw new Error("Only the administrator can use the admin sign-in page.");
+          }
+          await navigate({ to: home, replace: true });
         }
       })
       .catch(async (error) => {
         await supabase.auth.signOut();
         toast.error(error instanceof Error ? error.message : "Unable to open your account.");
       });
-  }, [navigate]);
+  }, [admin, navigate]);
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     let disposed = false;
@@ -64,7 +85,8 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       const callback = parseOAuthCallback(url);
       if (!callback) return;
       lastUrl = url;
-      setGoogleBusy(true);
+      const flow = takeGoogleFlow();
+      setGoogleBusy(flow ?? "signin");
       try {
         await Browser.close();
         if (callback.error) throw new Error(callback.error);
@@ -77,13 +99,14 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
         });
         if (error || !data.user)
           throw new Error(error?.message || "Unable to sign in with Google.");
-        await ensureGoogleCreatorAccount();
+        if (!flow) throw new Error("Choose Google sign up or sign in and try again.");
+        await completeGoogleCreatorAccount({ data: flow });
         await navigate({ to: await homeForUser(data.user.id), replace: true });
       } catch (error) {
         await supabase.auth.signOut();
         toast.error(error instanceof Error ? error.message : "Unable to sign in with Google.");
       } finally {
-        if (!disposed) setGoogleBusy(false);
+        if (!disposed) setGoogleBusy(null);
       }
     };
     let listener: Awaited<ReturnType<typeof App.addListener>> | undefined;
@@ -109,6 +132,14 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       });
       if (error || !data.user) throw new Error("Email or password is incorrect.");
       const home = await homeForUser(data.user.id);
+      if (!admin && home === "/admin") {
+        await supabase.auth.signOut();
+        throw new Error("Administrator accounts must use the separate admin sign-in page.");
+      }
+      if (admin && home !== "/admin") {
+        await supabase.auth.signOut();
+        throw new Error("Only the administrator can use the admin sign-in page.");
+      }
       setPassword("");
       await navigate({ to: home });
     } catch (error) {
@@ -117,13 +148,12 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       setBusy(false);
     }
   }
-  async function signInWithGoogle() {
-    setGoogleBusy(true);
+  async function continueWithGoogle(flow: GoogleAccountFlow) {
+    setGoogleBusy(flow);
+    rememberGoogleFlow(flow);
     try {
       const native = Capacitor.isNativePlatform();
-      const redirectTo = native
-        ? NATIVE_GOOGLE_CALLBACK
-        : `${window.location.origin}${admin ? "/admin-login" : "/auth"}`;
+      const redirectTo = native ? NATIVE_GOOGLE_CALLBACK : `${window.location.origin}/auth`;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: native },
@@ -134,8 +164,9 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
         await Browser.open({ url: data.url, presentationStyle: "popover" });
       }
     } catch (error) {
+      takeGoogleFlow();
       toast.error(error instanceof Error ? error.message : "Unable to start Google sign-in.");
-      setGoogleBusy(false);
+      setGoogleBusy(null);
     }
   }
   const Icon = admin ? ShieldCheck : FileCheck2;
@@ -208,26 +239,48 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
               : "Sign in or create your paper-creator account with Google."}
           </p>
           <form onSubmit={signIn} className="space-y-5" aria-busy={busy}>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 w-full gap-3 bg-background"
-              disabled={busy || googleBusy}
-              onClick={signInWithGoogle}
-            >
-              {googleBusy ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <GoogleMark />}
-              {googleBusy ? "Opening Google…" : "Continue with Google"}
-            </Button>
             {!admin && (
-              <p className="text-center text-xs leading-5 text-muted-foreground">
-                First time here? Any verified Gmail account creates your workspace automatically.
-              </p>
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 w-full gap-3 bg-background"
+                  disabled={busy || googleBusy !== null}
+                  onClick={() => continueWithGoogle("signin")}
+                >
+                  {googleBusy === "signin" ? (
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <GoogleMark />
+                  )}
+                  {googleBusy === "signin" ? "Opening Google…" : "Sign in with Google"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-12 w-full gap-3"
+                  disabled={busy || googleBusy !== null}
+                  onClick={() => continueWithGoogle("signup")}
+                >
+                  {googleBusy === "signup" ? (
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <GoogleMark />
+                  )}
+                  {googleBusy === "signup" ? "Opening Google…" : "Sign up as paper creator"}
+                </Button>
+                <p className="text-center text-xs leading-5 text-muted-foreground">
+                  New Gmail accounts must sign up once before using Google sign in.
+                </p>
+              </>
             )}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
-              or use email
-              <span className="h-px flex-1 bg-border" />
-            </div>
+            {!admin && (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or use email
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -267,7 +320,10 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
                 </Button>
               </div>
             </div>
-            <Button className="h-12 w-full justify-between px-5" disabled={busy || googleBusy}>
+            <Button
+              className="h-12 w-full justify-between px-5"
+              disabled={busy || googleBusy !== null}
+            >
               {busy ? "Signing in…" : "Sign in securely"}
               {busy ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -278,8 +334,8 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
           </form>
           {!admin && (
             <p className="mt-7 border-t border-border/70 pt-5 text-xs leading-relaxed text-muted-foreground">
-              Need access or a new password?{" "}
-              <span className="font-semibold text-foreground">Contact your administrator.</span>
+              Google signup creates paper creators only. Administrators use the separate admin
+              sign-in.
             </p>
           )}
         </section>

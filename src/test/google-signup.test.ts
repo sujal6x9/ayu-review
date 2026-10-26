@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { googleCreatorProfile } from "@/lib/google-signup";
+import { googleCreatorAction, googleCreatorProfile } from "@/lib/google-signup";
 
 describe("Google self-signup", () => {
+  it("requires signup before paper-creator sign in", () => {
+    expect(googleCreatorAction("signup", [])).toBe("create");
+    expect(googleCreatorAction("signin", ["uploader"])).toBe("signin");
+    expect(() => googleCreatorAction("signin", [])).toThrow("Sign up with Google first");
+    expect(() => googleCreatorAction("signup", ["uploader"])).toThrow("already exists");
+  });
+
+  it("never opens or creates administrator access through the user Google flow", () => {
+    expect(() => googleCreatorAction("signup", ["admin"])).toThrow("admin sign-in");
+    expect(() => googleCreatorAction("signin", ["admin"])).toThrow("admin sign-in");
+  });
+
   it("accepts a verified Gmail identity and normalizes its profile", () => {
     expect(
       googleCreatorProfile({

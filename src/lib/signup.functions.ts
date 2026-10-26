@@ -1,17 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { googleCreatorProfile } from "@/lib/google-signup";
+import { googleCreatorAction, googleCreatorProfile } from "@/lib/google-signup";
 
-export const ensureGoogleCreatorAccount = createServerFn({ method: "POST" })
+export const completeGoogleCreatorAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((input: unknown) => z.enum(["signup", "signin"]).parse(input))
+  .handler(async ({ context, data: flow }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existingRoles, error: roleReadError } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId);
     if (roleReadError) throw new Error("Unable to prepare your workspace account.");
-    if ((existingRoles ?? []).length > 0) return { created: false };
+    const action = googleCreatorAction(
+      flow,
+      (existingRoles ?? []).map((row) => row.role),
+    );
+    if (action === "signin") return { created: false };
 
     const { data, error } = await supabaseAdmin.auth.admin.getUserById(context.userId);
     if (error || !data.user) throw new Error("Unable to verify your Google account.");
