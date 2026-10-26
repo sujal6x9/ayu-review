@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { listSharedDoctors } from "@/lib/doctor.functions";
 
 export const authUserOptions = {
   queryKey: ["auth-user"],
@@ -57,10 +58,6 @@ export function useProfiles() {
 export function useDoctors() {
   return useQuery({
     queryKey: ["doctors"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("doctors").select("*").order("name");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => listSharedDoctors(),
   });
 }
