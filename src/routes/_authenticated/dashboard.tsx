@@ -8,6 +8,7 @@ import { STATUS_LABEL, paperProgress, statusTone, type Paper } from "@/lib/paper
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { LoadingState } from "@/components/LoadingState";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -138,6 +139,15 @@ function Dashboard() {
     },
     { label: "Unresolved comments", value: unresolved, tone: "text-warning" },
   ];
+
+  if (papersLoading)
+    return (
+      <LoadingState
+        variant="page"
+        label="Loading your papers…"
+        detail="Preparing assignments, comments, and review progress."
+      />
+    );
 
   return (
     <main className="mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-2.5 py-5 min-[320px]:px-3 min-[380px]:px-4 sm:px-6 sm:py-10">

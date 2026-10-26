@@ -9,6 +9,7 @@ import { useDoctors, useMe } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingState } from "@/components/LoadingState";
 
 export const Route = createFileRoute("/_authenticated/reviewers/")({
   head: () => ({
@@ -77,11 +78,7 @@ function DoctorsPage() {
   }
 
   if (mePending || doctorsPending)
-    return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-10 text-sm text-muted-foreground">
-        Loading Dr directory…
-      </main>
-    );
+    return <LoadingState variant="page" label="Loading Dr directory…" />;
   if (!canManage)
     return (
       <main className="mx-auto w-full max-w-5xl px-4 py-10">

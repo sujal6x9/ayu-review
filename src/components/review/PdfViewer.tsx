@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/LoadingState";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { MARK_TONE, type Comment, type PdfAnchor } from "@/lib/papers";
 import { penBounds, strokePath, type PenPoint } from "@/lib/review-tools";
@@ -27,7 +28,9 @@ export function PdfViewer(props: Props) {
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
-    const observer = new ResizeObserver(([entry]) => { if (entry) setAvailableWidth(Math.max(100, entry.contentRect.width)); });
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setAvailableWidth(Math.max(100, entry.contentRect.width));
+    });
     observer.observe(node);
     return () => observer.disconnect();
   }, [doc]);
@@ -56,10 +59,13 @@ export function PdfViewer(props: Props) {
   }, [props.data]);
 
   if (err) return <div className="p-8 text-destructive">Could not open this PDF: {err}</div>;
-  if (!doc) return <div className="p-8 text-muted-foreground">Opening PDF…</div>;
+  if (!doc) return <LoadingState label="Opening PDF…" detail="Rendering pages and annotations." />;
 
   return (
-    <div ref={containerRef} className="flex w-full flex-col items-center gap-5 px-2 py-4 sm:px-4 sm:py-6">
+    <div
+      ref={containerRef}
+      className="flex w-full flex-col items-center gap-5 px-2 py-4 sm:px-4 sm:py-6"
+    >
       {Array.from({ length: doc.numPages }, (_, i) => (
         <PdfPage key={i} doc={doc} pageNumber={i + 1} availableWidth={availableWidth} {...props} />
       ))}
@@ -121,13 +127,23 @@ function PdfPage({
   function frac(e: React.PointerEvent) {
     const r = overlay.current?.getBoundingClientRect();
     if (!r) return { x: 0, y: 0 };
-    return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
+    return {
+      x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+      y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+    };
   }
 
   const mine = threads.filter((t) => (t.anchor as PdfAnchor).page === pageNumber);
 
   return (
-    <div id={`pdf-page-${pageNumber}`} className="relative shrink-0 bg-card shadow-[0_16px_45px_-24px_rgba(15,45,55,.7)]" style={{ width: Math.min(size.w, availableWidth * zoom), aspectRatio: `${size.w} / ${size.h}` }}>
+    <div
+      id={`pdf-page-${pageNumber}`}
+      className="relative shrink-0 bg-card shadow-[0_16px_45px_-24px_rgba(15,45,55,.7)]"
+      style={{
+        width: Math.min(size.w, availableWidth * zoom),
+        aspectRatio: `${size.w} / ${size.h}`,
+      }}
+    >
       <canvas ref={canvasRef} className="block h-auto w-full" />
       <div
         ref={overlay}
@@ -158,13 +174,25 @@ function PdfPage({
           const p = frac(e);
           setDraft({ ...draft, x: p.x, y: p.y });
         }}
-        onPointerCancel={() => { stroke.current = []; setStrokePreview([]); setDraft(null); }}
+        onPointerCancel={() => {
+          stroke.current = [];
+          setStrokePreview([]);
+          setDraft(null);
+        }}
         onPointerUp={(e) => {
           if (pen && stroke.current.length) {
             const points = [...stroke.current, frac(e)];
             stroke.current = [];
             setStrokePreview([]);
-            onPen({ type: "pdf", page: pageNumber, ...penBounds(points), points, tool: "pen", color: penColor, width: penWidth });
+            onPen({
+              type: "pdf",
+              page: pageNumber,
+              ...penBounds(points),
+              points,
+              tool: "pen",
+              color: penColor,
+              width: penWidth,
+            });
             return;
           }
           if (!draft) return;
@@ -182,28 +210,67 @@ function PdfPage({
           onCreate({ type: "pdf", page: pageNumber, x, y, w, h });
         }}
       >
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 1000 1000"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
           {mine.map((t) => {
             const a = t.anchor as PdfAnchor;
-            return a.points ? <path key={t.id} d={strokePath(a.points)} fill="none" stroke={a.color ?? "currentColor"} strokeWidth={a.width ?? 2.5} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className={`${a.color ? "" : MARK_TONE[t.mark].text} ${t.status === "resolved" ? "opacity-40" : ""}`} /> : null;
+            return a.points ? (
+              <path
+                key={t.id}
+                d={strokePath(a.points)}
+                fill="none"
+                stroke={a.color ?? "currentColor"}
+                strokeWidth={a.width ?? 2.5}
+                vectorEffect="non-scaling-stroke"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`${a.color ? "" : MARK_TONE[t.mark].text} ${t.status === "resolved" ? "opacity-40" : ""}`}
+              />
+            ) : null;
           })}
-          {strokePreview.length > 0 && <path d={strokePath(strokePreview)} fill="none" stroke={penColor} strokeWidth={penWidth} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />}
+          {strokePreview.length > 0 && (
+            <path
+              d={strokePath(strokePreview)}
+              fill="none"
+              stroke={penColor}
+              strokeWidth={penWidth}
+              vectorEffect="non-scaling-stroke"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )}
         </svg>
         {mine.map((t, i) => {
           const a = t.anchor as PdfAnchor;
           const tone = MARK_TONE[t.mark];
           return (
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               key={t.id}
               id={`anchor-${t.id}`}
-              onPointerDown={(e) => { if (!pen && !marking) e.stopPropagation(); }}
-              onClick={() => { if (!pen && !marking) onFocus(t.id); }}
+              onPointerDown={(e) => {
+                if (!pen && !marking) e.stopPropagation();
+              }}
+              onClick={() => {
+                if (!pen && !marking) onFocus(t.id);
+              }}
               title={t.body}
               aria-label={a.points ? "Select pen mark" : "Select area comment"}
               className={`absolute min-h-0 p-0 ${a.points ? "border-0 hover:bg-transparent" : `border-2 ${tone.border} ${tone.soft}`} ${pen || marking ? "pointer-events-none" : ""} ${t.status === "resolved" ? "opacity-40" : ""} ${focusId === t.id ? "ring-2 ring-ring ring-offset-1" : ""}`}
-              style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%`, width: `${a.w * 100}%`, height: `${a.h * 100}%` }}
+              style={{
+                left: `${a.x * 100}%`,
+                top: `${a.y * 100}%`,
+                width: `${a.w * 100}%`,
+                height: `${a.h * 100}%`,
+              }}
             >
-              <span className={`absolute -left-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-primary-foreground ${tone.bg}`}>
+              <span
+                className={`absolute -left-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-primary-foreground ${tone.bg}`}
+              >
                 {t.question_ref || i + 1}
               </span>
             </Button>
@@ -212,7 +279,12 @@ function PdfPage({
         {pending && pending.page === pageNumber && (
           <div
             className="absolute animate-pulse border-2 border-dashed border-primary bg-primary/10"
-            style={{ left: `${pending.x * 100}%`, top: `${pending.y * 100}%`, width: `${pending.w * 100}%`, height: `${pending.h * 100}%` }}
+            style={{
+              left: `${pending.x * 100}%`,
+              top: `${pending.y * 100}%`,
+              width: `${pending.w * 100}%`,
+              height: `${pending.h * 100}%`,
+            }}
           />
         )}
         {draft && (

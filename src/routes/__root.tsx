@@ -17,6 +17,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { LoadingState } from "@/components/LoadingState";
 
 function NotFoundComponent() {
   return (
@@ -164,15 +165,5 @@ function RootComponent() {
 function NavigationLoading() {
   const loading = useRouterState({ select: (state) => state.status === "pending" });
   if (!loading) return null;
-  return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[100]" role="status">
-      <div className="h-1 w-full overflow-hidden bg-primary/15">
-        <div className="h-full w-1/2 animate-[pulse_900ms_ease-in-out_infinite] rounded-r-full bg-primary shadow-[0_0_14px_rgba(0,127,105,.65)]" />
-      </div>
-      <div className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/95 px-3 py-2 text-xs font-semibold text-primary shadow-lg backdrop-blur">
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary/25 border-r-primary" />
-        Loading…
-      </div>
-    </div>
-  );
+  return <LoadingState variant="floating" label="Loading page…" />;
 }

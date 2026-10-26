@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { doctorName } from "@/lib/accounts";
 import { useDoctors, useMe } from "@/lib/auth";
 import { STATUS_LABEL, statusTone } from "@/lib/papers";
+import { LoadingState } from "@/components/LoadingState";
 
 export const Route = createFileRoute("/_authenticated/reviewers/$reviewerId")({
   head: () => ({ meta: [{ title: "Dr assignments — Ayu Review" }] }),
@@ -31,11 +32,7 @@ function DoctorDetailPage() {
     },
   });
   if (mePending || doctorsPending)
-    return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-10 text-sm text-muted-foreground">
-        Loading Dr assignments…
-      </main>
-    );
+    return <LoadingState variant="page" label="Loading Dr assignments…" />;
   if (!canManage)
     return (
       <main className="mx-auto w-full max-w-5xl px-4 py-10">
@@ -51,6 +48,7 @@ function DoctorDetailPage() {
         <h1 className="mt-5 font-display text-3xl font-semibold">Dr not found</h1>
       </main>
     );
+  if (isPending) return <LoadingState variant="page" label="Loading assigned papers…" />;
   const active = papers.filter((paper) => !["approved", "finalized"].includes(paper.status)).length;
   return (
     <main className="mx-auto w-full max-w-6xl px-3 py-6 sm:px-6 sm:py-10">
@@ -143,7 +141,7 @@ function DoctorDetailPage() {
         ))}
         {papers.length === 0 && (
           <div className="rounded-2xl border border-dashed bg-card/60 px-4 py-12 text-center text-sm text-muted-foreground sm:col-span-2">
-            {isPending ? "Loading papers…" : "No papers are assigned to this Dr yet."}
+            No papers are assigned to this Dr yet.
           </div>
         )}
       </div>

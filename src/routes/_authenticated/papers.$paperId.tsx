@@ -20,6 +20,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingState } from "@/components/LoadingState";
 import { useDoctors, useMe, useProfiles } from "@/lib/auth";
 import {
   MARK_LABEL,
@@ -304,7 +305,14 @@ function Workspace() {
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }));
   }, [threads]);
 
-  if (paperQ.isLoading) return <div className="p-8 text-muted-foreground">Loading…</div>;
+  if (paperQ.isLoading)
+    return (
+      <LoadingState
+        variant="page"
+        label="Opening paper…"
+        detail="Loading review details and comments."
+      />
+    );
   if (!paper) return <div className="p-8">This paper doesn’t exist or you don’t have access.</div>;
 
   const isUploader = me?.id === paper.uploader_id;
@@ -568,15 +576,15 @@ function Workspace() {
             </Button>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
-            <Suspense
-              fallback={<div className="p-8 text-sm text-muted-foreground">Opening document…</div>}
-            >
+            <Suspense fallback={<LoadingState label="Opening document…" />}>
               {fileErr ? (
                 <div className="p-8 text-destructive">Could not load the file.</div>
               ) : !fileData ? (
-                <div className="p-8 text-muted-foreground">
-                  {paper.file_path ? "Loading file…" : "No file attached."}
-                </div>
+                paper.file_path ? (
+                  <LoadingState label="Loading file…" detail="Preparing the document viewer." />
+                ) : (
+                  <div className="p-8 text-muted-foreground">No file attached.</div>
+                )
               ) : paper.file_type === "pdf" ? (
                 <PdfViewer
                   data={fileData}

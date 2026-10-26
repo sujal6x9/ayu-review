@@ -24,6 +24,7 @@ import { completeGoogleCreatorAccount } from "@/lib/signup.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingState } from "@/components/LoadingState";
 
 async function homeForUser(userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -52,6 +53,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState<GoogleAccountFlow | null>(null);
   const [creatingAccount, setCreatingAccount] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -75,7 +77,8 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
       .catch(async (error) => {
         await supabase.auth.signOut();
         toast.error(error instanceof Error ? error.message : "Unable to open your account.");
-      });
+      })
+      .finally(() => setAuthChecking(false));
   }, [admin, navigate]);
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -173,6 +176,19 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
   const Icon = admin ? ShieldCheck : FileCheck2;
   return (
     <main className="relative min-h-svh overflow-hidden bg-background">
+      {(authChecking || googleBusy !== null) && (
+        <LoadingState
+          variant="overlay"
+          label={
+            googleBusy === "signup"
+              ? "Creating your account…"
+              : googleBusy === "signin"
+                ? "Signing in with Google…"
+                : "Checking your account…"
+          }
+          detail="Securely connecting to your Ayu Review workspace."
+        />
+      )}
       <header className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-8 lg:px-12">
         <Link to="/" className="flex min-w-0 items-center gap-3 text-primary">
           <img
@@ -306,11 +322,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
