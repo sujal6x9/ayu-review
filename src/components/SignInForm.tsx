@@ -51,6 +51,7 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState<GoogleAccountFlow | null>(null);
+  const [creatingAccount, setCreatingAccount] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -231,112 +232,113 @@ export function SignInForm({ admin = false }: { admin?: boolean }) {
             {admin ? "Administration" : "Secure workspace"}
           </div>
           <h2 className="font-display text-3xl font-semibold leading-tight text-foreground">
-            {admin ? "Admin sign in" : "Welcome back"}
+            {admin ? "Admin sign in" : creatingAccount ? "Create your account" : "Welcome back"}
           </h2>
           <p className="mb-8 mt-2 text-sm leading-6 text-muted-foreground">
             {admin
               ? "Manage your review team and account access."
-              : "Sign in or create your paper-creator account with Google."}
+              : creatingAccount
+                ? "Use a verified Gmail address to create your paper-creator workspace."
+                : "Sign in to continue to your paper-creator workspace."}
           </p>
           <form onSubmit={signIn} className="space-y-5" aria-busy={busy}>
             {!admin && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 w-full gap-3 bg-background"
-                  disabled={busy || googleBusy !== null}
-                  onClick={() => continueWithGoogle("signin")}
-                >
-                  {googleBusy === "signin" ? (
-                    <LoaderCircle className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <GoogleMark />
-                  )}
-                  {googleBusy === "signin" ? "Opening Google…" : "Sign in with Google"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="h-12 w-full gap-3"
-                  disabled={busy || googleBusy !== null}
-                  onClick={() => continueWithGoogle("signup")}
-                >
-                  {googleBusy === "signup" ? (
-                    <LoaderCircle className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <GoogleMark />
-                  )}
-                  {googleBusy === "signup" ? "Opening Google…" : "Sign up as paper creator"}
-                </Button>
-                <p className="text-center text-xs leading-5 text-muted-foreground">
-                  New Gmail accounts must sign up once before using Google sign in.
-                </p>
-              </>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 w-full gap-3 bg-background"
+                disabled={busy || googleBusy !== null}
+                onClick={() => continueWithGoogle(creatingAccount ? "signup" : "signin")}
+              >
+                {googleBusy !== null ? (
+                  <LoaderCircle className="h-5 w-5 animate-spin" />
+                ) : (
+                  <GoogleMark />
+                )}
+                {googleBusy !== null
+                  ? "Opening Google…"
+                  : creatingAccount
+                    ? "Sign up with Google"
+                    : "Sign in with Google"}
+              </Button>
             )}
-            {!admin && (
+            {!admin && !creatingAccount && (
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="h-px flex-1 bg-border" />
                 or use email
                 <span className="h-px flex-1 bg-border" />
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                placeholder="you@example.com"
-                type="email"
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  className="pr-12"
-                  placeholder="Enter your password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+            {(admin || !creatingAccount) && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email address</Label>
+                  <Input
+                    id="email"
+                    placeholder="you@example.com"
+                    type="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      className="pr-12"
+                      placeholder="Enter your password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1 h-9 w-9 text-muted-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1 h-9 w-9 text-muted-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="h-12 w-full justify-between px-5"
+                  disabled={busy || googleBusy !== null}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {busy ? "Signing in…" : "Sign in securely"}
+                  {busy ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-4 w-4" />
+                  )}
                 </Button>
-              </div>
-            </div>
-            <Button
-              className="h-12 w-full justify-between px-5"
-              disabled={busy || googleBusy !== null}
-            >
-              {busy ? "Signing in…" : "Sign in securely"}
-              {busy ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowRight className="h-4 w-4" />
-              )}
-            </Button>
+              </>
+            )}
           </form>
           {!admin && (
-            <p className="mt-7 border-t border-border/70 pt-5 text-xs leading-relaxed text-muted-foreground">
-              Google signup creates paper creators only. Administrators use the separate admin
-              sign-in.
-            </p>
+            <div className="mt-7 border-t border-border/70 pt-5 text-center text-sm text-muted-foreground">
+              {creatingAccount ? "Already have an account?" : "Don't have an account?"}{" "}
+              <button
+                type="button"
+                className="font-semibold text-primary underline-offset-4 hover:underline"
+                onClick={() => setCreatingAccount((value) => !value)}
+              >
+                {creatingAccount ? "Sign in" : "Create one"}
+              </button>
+            </div>
           )}
         </section>
       </div>
